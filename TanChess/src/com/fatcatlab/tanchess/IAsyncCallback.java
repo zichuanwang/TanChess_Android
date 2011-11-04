@@ -1,0 +1,12 @@
+package com.fatcatlab.tanchess;
+
+public interface IAsyncCallback {
+    // ===========================================================
+    // Methods
+    // ===========================================================
+
+    public abstract void workToDo();
+   
+    public abstract void onComplete();
+   
+}
