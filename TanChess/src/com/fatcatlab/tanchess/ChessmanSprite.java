@@ -197,6 +197,8 @@ public class ChessmanSprite extends Sprite {
 					gameScene.shutDownPowerUp();
 				}
 
+				System.out.println("speed:"+mSpeed);
+				
 				Vector2 impulse = new Vector2(mSpeed
 						* (float) Math.sin(angle / 180 * Math.PI), mSpeed
 						* -(float) Math.cos(angle / 180 * Math.PI));
@@ -245,7 +247,6 @@ public class ChessmanSprite extends Sprite {
 	public void setBody(Body body) {
 		mBody = body;
 	}
-
 	public boolean checkAlive() {
 		int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
 		int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
@@ -258,6 +259,26 @@ public class ChessmanSprite extends Sprite {
 		if (this.getPosition().y < halfScreenHeight
 				- GameScene.CHESSBOARD_HEIGHT / 2
 				|| this.getPosition().y > halfScreenHeight
+						+ GameScene.CHESSBOARD_HEIGHT / 2) {
+			return false;
+		}
+		return true;
+	} 
+	
+	
+	public static boolean checkAlive(float x, float y)
+	{
+		int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
+		int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
+		if (x < halfScreenWidth - GameScene.CHESSBOARD_WIDTH
+				/ 2
+				|| x > halfScreenWidth
+						+ GameScene.CHESSBOARD_WIDTH / 2) {
+			return false;
+		}
+		if (y < halfScreenHeight
+				- GameScene.CHESSBOARD_HEIGHT / 2
+				|| y > halfScreenHeight
 						+ GameScene.CHESSBOARD_HEIGHT / 2) {
 			return false;
 		}
