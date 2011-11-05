@@ -7,6 +7,8 @@ import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
+import org.anddev.andengine.entity.particle.ParticleSystem;
+import org.anddev.andengine.entity.particle.emitter.CircleOutlineParticleEmitter;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.shape.Shape;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -27,6 +29,7 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.MassData;
 
+import dalvik.system.TemporaryDirectory;
 
 import android.util.Log;
 
@@ -184,10 +187,11 @@ public class GameScene extends AbstractGameScene {
     	mBrain.setGameScene(this);
     	
     	MyContactListener listener = new MyContactListener(this);
-    	//����烽�锟�nge
+    	//锟斤拷锟�inge
     	int hingeInterval = 75;
-    	listener._bodyA = createHinge(StartActivity.CAMERA_WIDTH / 2 - hingeInterval, StartActivity.CAMERA_HEIGHT / 2, mHingeRgn);
-    	listener._bodyB = createHinge(StartActivity.CAMERA_WIDTH / 2 + hingeInterval, StartActivity.CAMERA_HEIGHT / 2, mHingeRgn);
+    	int hingeHeightInterval = 2;
+    	listener._bodyA = createHinge(StartActivity.CAMERA_WIDTH / 2 - hingeInterval, StartActivity.CAMERA_HEIGHT / 2 - hingeHeightInterval, mHingeRgn);
+    	listener._bodyB = createHinge(StartActivity.CAMERA_WIDTH / 2 + hingeInterval, StartActivity.CAMERA_HEIGHT / 2 - hingeHeightInterval, mHingeRgn);
     	this.mPhysicsWorld.setContactListener(listener);
     	
     	this.mEngine.setScene(this);
@@ -559,7 +563,8 @@ public class GameScene extends AbstractGameScene {
     	this.getChild(1).attachChild(sprite);
     	final IEntity lastChild = this.getLastChild();
     	lastChild.attachChild(sprite.mGunsight);
-    	//娉ㄩ�缁�Е����烽��ゆ������    	this.registerTouchArea(sprite);
+    	//注锟结触锟斤拷锟斤拷锟斤拷
+    	this.registerTouchArea(sprite);
     	sprite.body = body;
     	sprite.setGameScene(this);
     	sprite.isForbad = false;

@@ -209,6 +209,7 @@ public class Brain {
 		}
 
 		//forbid to operate the ai player's chess
+		/*
 		Enumeration<Integer> en2 = mChessmans.keys();
 		while (en2.hasMoreElements()) {
 			Integer key = (Integer) en2.nextElement();
@@ -216,6 +217,7 @@ public class Brain {
 			if (chessman.getGroup() == aiController.player)
 				chessman.isForbad = true;
 		}
+		*/
 
 		// test for get Position
 		if (this.mCurrentPlayer != aiController.player)
