@@ -197,7 +197,7 @@ public class ChessmanSprite extends Sprite {
 					gameScene.shutDownPowerUp();
 				}
 
-				System.out.println("speed:"+mSpeed);
+				//System.out.println("speed:"+mSpeed);
 				
 				Vector2 impulse = new Vector2(mSpeed
 						* (float) Math.sin(angle / 180 * Math.PI), mSpeed

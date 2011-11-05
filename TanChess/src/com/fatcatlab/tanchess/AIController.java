@@ -21,14 +21,17 @@ public class AIController {
 	private final float W_SCALE = 0.2f;
 	private final float mPixelToMeterRatio = 32.0f;
 
-	/*
-	 * private final float L_LinearDamping = 4.0f; private final float
-	 * M_LinearDamping = 2.5f; private final float S_LinearDamping = 1.0f;
-	 */
+	private final float L_LinearDamping = 4.0f;
+	private final float M_LinearDamping = 2.5f;
+	private final float S_LinearDamping = 1.0f;
+
+	private final float STEPDT = 1.0f / 30.0f;
+
 	// calculate from my test. damping may equal f
-	private final float L_LinearDamping = 1.52f;
-	private final float M_LinearDamping = 0.95f;
-	private final float S_LinearDamping = 0.38f;
+	/*
+	 * private final float L_LinearDamping = 1.52f; private final float
+	 * M_LinearDamping = 0.95f; private final float S_LinearDamping = 0.38f;
+	 */
 
 	// the m of the chess
 	private final float mass = 3.0f;
@@ -38,7 +41,6 @@ public class AIController {
 
 	// hinge 's property
 	private final int hingeWidth = 38;
-	private final int hingeHeight = 4;
 	// Array to carry the Hinge's 4 point
 	private final Vector2 L_Hinge[] = {
 			new Vector2(halfScreenWidth - 75, halfScreenHeight - 2),
@@ -47,13 +49,12 @@ public class AIController {
 			new Vector2(halfScreenWidth - 75 + hingeWidth, halfScreenHeight + 2) };
 	private final Vector2 R_Hinge[] = {
 			new Vector2(halfScreenWidth + 75, halfScreenHeight - 2),
-			new Vector2(halfScreenWidth + 75 +hingeWidth, halfScreenHeight - 2),
+			new Vector2(halfScreenWidth + 75 + hingeWidth, halfScreenHeight - 2),
 			new Vector2(halfScreenWidth + 75, halfScreenHeight + 2),
 			new Vector2(halfScreenWidth + 75 + hingeWidth, halfScreenHeight + 2) };
-	
-	//size from scale to pix
+
+	// size from scale to pix
 	private final int scaleToPix = 60;
-	
 
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable();
@@ -98,38 +99,31 @@ public class AIController {
 		System.out.println("en1.size:" + myChessmans.size());
 		System.out.println("en2.size:" + rivalChessmans.size());
 
-		// canBounceOff(myChessmans.get(new Integer(16)),
-		// rivalChessmans.get(new Integer(11)));
+		canBounceOff(myChessmans.get(new Integer(16)),
+				rivalChessmans.get(new Integer(11)));
 
 		// used to get the detail position
 		// ChessmanSprite chess = rivalChessmans.get(new Integer(1));
 		// System.out.println("x:"+chess.getPosition().x);
 		// System.out.println("y:"+chess.getPosition().y);
 
-		for (Iterator it = myChessmans.keySet().iterator(); it.hasNext();) {
-			Integer key = (Integer) it.next();
-			ChessmanSprite myChessman = myChessmans.get(key);
-			System.out.println("my id:" + key.intValue());
-			
-			for (Iterator it2 = rivalChessmans.keySet().iterator(); it2
-					.hasNext();) {
-				Integer key2 = (Integer) it2.next();
-				ChessmanSprite rivalChessman = rivalChessmans.get(key2);
-				
-				System.out.println("rival id:" + key2.intValue());
-				//check if will touch the hinge
-				if(this.checkBumpHinge(myChessman, rivalChessman))
-				{
-					System.out.println("Hinge");
-					continue;
-				}
-				
-				//check if will kick the rival chess off
-				if (canBounceOff(myChessman, rivalChessman)) {
-					System.out.println("can!");
-				} 
-			}
-		}
+		/*
+		 * for (Iterator it = myChessmans.keySet().iterator(); it.hasNext();) {
+		 * Integer key = (Integer) it.next(); ChessmanSprite myChessman =
+		 * myChessmans.get(key); System.out.println("my id:" + key.intValue());
+		 * 
+		 * for (Iterator it2 = rivalChessmans.keySet().iterator(); it2
+		 * .hasNext();) { Integer key2 = (Integer) it2.next(); ChessmanSprite
+		 * rivalChessman = rivalChessmans.get(key2);
+		 * 
+		 * System.out.println("rival id:" + key2.intValue()); // check if will
+		 * touch the hinge if (this.checkBumpHinge(myChessman, rivalChessman)) {
+		 * System.out.println("Hinge"); continue; }
+		 * 
+		 * // check if will kick the rival chess off if
+		 * (canBounceOff(myChessman, rivalChessman)) {
+		 * System.out.println("can!"); } } }
+		 */
 
 		/*
 		 * while (en1.hasMoreElements()) { Integer current = (Integer)
@@ -159,20 +153,28 @@ public class AIController {
 		boolean result = false;
 		float mSpeed = 33.0f;
 		float mAngle = 0.0f;
-		float mDamping = 0.0f;
+		float fromDamping = 0.0f;
+		float toDamping = 0.0f;
 		if (from.getScale() == ChessmanSprite.SMALL_SIZE) {
 			mSpeed *= 0.63f / 33 * 45;
-			mDamping = this.S_LinearDamping;
+			fromDamping = this.S_LinearDamping;
 		} else if (from.getScale() == ChessmanSprite.LARGE_SIZE) {
 			mSpeed *= 1.6f / 33 * 45;
-			mDamping = this.L_LinearDamping;
+			fromDamping = this.L_LinearDamping;
 		} else if (from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
 			mSpeed *= 1.3f / 33 * 45;
-			mDamping = this.M_LinearDamping;
+			fromDamping = this.M_LinearDamping;
+		}
+		if (to.getScale() == ChessmanSprite.SMALL_SIZE) {
+			toDamping = this.S_LinearDamping;
+		} else if (from.getScale() == ChessmanSprite.LARGE_SIZE) {
+			toDamping = this.L_LinearDamping;
+		} else if (from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
+			toDamping = this.M_LinearDamping;
 		}
 
-		float tan = (to.getPosition().y - from.getPosition().y)
-				/ (to.getPosition().x - from.getPosition().x);
+		// float tan = (to.getPosition().y - from.getPosition().y)
+		// / (to.getPosition().x - from.getPosition().x);
 
 		mAngle = (float) Math.atan((to.getPosition().y - from.getPosition().y)
 				/ (to.getPosition().x - from.getPosition().x));
@@ -188,28 +190,35 @@ public class AIController {
 
 		// System.out.println("angle:" + mAngle);
 
-		Vector2 impulse = new Vector2(mSpeed * (float) Math.sin(mAngle), mSpeed
-				* -(float) Math.cos(mAngle));
+		//Vector2 impulse = new Vector2(mSpeed * (float) Math.sin(mAngle), mSpeed
+		//		* -(float) Math.cos(mAngle));
+		
+		mSpeed = mSpeed /  this.mass;
 
 		float distance_in_box2d = getDistance(from, to)
 				/ this.mPixelToMeterRatio;
-		// System.out.println("distance:" + distance_in_box2d * 32);
-		mSpeed = mSpeed / this.mPixelToMeterRatio;
-		// s = ((vt)^2-(v0)^2)/2a
-		float v_collide = (float) Math.sqrt(mSpeed * mSpeed - 2 * mDamping
-				* distance_in_box2d / mass);
-		// System.out.println("V:" + v_collide);
+		System.out.println("distance_in_box2d:"+distance_in_box2d);
 
-		if (v_collide == Float.NaN)
+		float distance = 0.0f;
+		float time = 0.0f;
+		while(mSpeed > 1 &&  distance_in_box2d > distance){
+			distance += mSpeed*this.STEPDT;
+			mSpeed *=  1.0f - fromDamping*this.STEPDT; 
+			time += this.STEPDT;
+		}
+		System.out.println("time:"+time);
+		System.out.println("distance:"+distance);
+
+		//if the distance between the two chess is larger than the from chess can move , return false;
+		if(distance_in_box2d > distance)
 			return false;
-		// float distance_to_border = (float) (to.getPosition().x /
-		// Math.abs(Math.cos(mAngle/180*Math.PI)));
+		
+		float distance_can_move = this.getMoveDistance(mSpeed, toDamping);
+		
+		System.out.println("canmove :"+ distance_can_move);
 
-		float distance_can_move = this.getMoveDistance(to, v_collide)
-				* this.mPixelToMeterRatio;
-
-		result = this.checkOut(to, distance_can_move, mAngle);
-		// System.out.println("result:" + result);
+		result = this.checkOut(to, distance_can_move*this.mPixelToMeterRatio, mAngle);
+		System.out.println("result:" + result);
 		return result;
 	}
 
@@ -274,45 +283,59 @@ public class AIController {
 		return !result;
 	}
 
-	//true if will touch
+	// true if will touch
 	public boolean checkBumpHinge(ChessmanSprite from, ChessmanSprite to) {
 		boolean result = false;
-		
-		float k = (to.getPosition().y-from.getPosition().y)/(to.getPosition().x - from.getPosition().x);
+
+		float k = (to.getPosition().y - from.getPosition().y)
+				/ (to.getPosition().x - from.getPosition().x);
 		float a = k;
-		float c = -k*from.getPosition().x+from.getPosition().y;
-		
-		//should know the two chess are in the same side
+		float c = -k * from.getPosition().x + from.getPosition().y;
+
+		// should know the two chess are in the same side
 		boolean inSameSide = false;
-		if ((to.getPosition().y-this.halfScreenHeight)*(from.getPosition().y-this.halfScreenHeight) < 0)
+		if ((to.getPosition().y - this.halfScreenHeight)
+				* (from.getPosition().y - this.halfScreenHeight) < 0)
 			inSameSide = false;
 		else
 			inSameSide = true;
-		
-		//check hinge   if both chess are in same side than should check the --TO-- chess, else check the FROM chess
-		for(int i = 0 ; i < 4 ; i ++)
-		{
-			if(inSameSide == false)
-			{
-				if(getPointLineDistance(L_Hinge[i], a, -1, c) < from.getScale()*this.scaleToPix ||getPointLineDistance(R_Hinge[i], a, -1, c) < from.getScale()*this.scaleToPix  )
+
+		// check hinge if both chess are in same side than should check the
+		// --TO-- chess, else check the FROM chess
+		for (int i = 0; i < 4; i++) {
+			if (inSameSide == false) {
+				if (getPointLineDistance(L_Hinge[i], a, -1, c) < from
+						.getScale() * this.scaleToPix
+						|| getPointLineDistance(R_Hinge[i], a, -1, c) < from
+								.getScale() * this.scaleToPix)
+					return true;
+			} else {
+				if (getPointLineDistance(L_Hinge[i], a, -1, c) < to.getScale()
+						* this.scaleToPix
+						|| getPointLineDistance(R_Hinge[i], a, -1, c) < to
+								.getScale() * this.scaleToPix)
 					return true;
 			}
-			else
-			{
-				if(getPointLineDistance(L_Hinge[i], a, -1, c) < to.getScale()*this.scaleToPix|| getPointLineDistance(R_Hinge[i], a, -1, c) < to.getScale()*this.scaleToPix )
-					return true;
-			}
-				
+
 		}
-		
+
 		return result;
 	}
-	
-	//point: (x,y)    line : ax+by+c = 0
-	public float getPointLineDistance(Vector2 point, float a, float b, float c)
-	{
+
+	// point: (x,y) line : ax+by+c = 0
+	public float getPointLineDistance(Vector2 point, float a, float b, float c) {
 		return (float) Math.abs((a * point.x + b * point.y + c)
 				/ Math.sqrt(a * a + b * b));
+	}
+	
+	//chess can move by given a speed
+	public float getMoveDistance(float speed, float damping){
+		float distance = 0.0f;
+		while(speed > 1){
+			distance += speed * this.STEPDT;
+			speed *= (1.0f - damping*this.STEPDT);
+		}
+		return distance;
 	}
 
 }

@@ -196,7 +196,7 @@ public class GameScene extends AbstractGameScene {
     	
     	this.mEngine.setScene(this);
     	Log.d("MyLog","gamescene.onloadscene");
-    	this.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {
+    	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
     		
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
