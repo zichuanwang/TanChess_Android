@@ -220,8 +220,9 @@ public class Brain {
 		*/
 
 		// test for get Position
+		/*
 		if (this.mCurrentPlayer != aiController.player)
-			aiController.print(mChessmans, mProps);
+			aiController.print(mChessmans, mProps);*/
 
 		// exchange the player
 		mCurrentPlayer = !mCurrentPlayer;
@@ -492,4 +493,27 @@ public class Brain {
 
 	}
 
+	public ChessmanCollisionArray generateChessmanCollisionArray() {
+		ChessmanCollisionArray array = new ChessmanCollisionArray();
+		Enumeration<Integer> en = mChessmans.keys();
+		int i = 0;
+		while (en.hasMoreElements()) {
+			Integer key = (Integer) en.nextElement();
+			ChessmanSprite sprite = mChessmans.get(key);
+			ChessmanCollisionStruct ccs = new ChessmanCollisionStruct(sprite.getPosition().x, sprite.getPosition().y, sprite.chessmanID);
+			array.addItemWithCCS(ccs, i);
+			i++;
+		}
+		return array;
+	}
+	
+	public void reconcileChessmanCollisionArray(ChessmanCollisionArray array) {
+		for(int i = 0; i < 32; i++) {
+			ChessmanCollisionStruct ccs = array.getCSSAtIndex(i);
+			ChessmanSprite sprite = this.mChessmans.get(ccs.ID);
+			Log.d("BT","ID:"+new Integer(ccs.ID).toString());
+			if(sprite.body != null)
+				sprite.body.setTransform(new Vector2(ccs.Position_x / 32, ccs.Position_y / 32), sprite.body.getAngle());
+		}
+	}
 }

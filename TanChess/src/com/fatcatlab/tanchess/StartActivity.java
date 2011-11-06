@@ -199,6 +199,7 @@ public class StartActivity extends BaseGameActivity {
                 // construct a string from the valid bytes in the buffer
                 //String readMessage = new String(readBuf, 0, msg.arg1);
                 //StartActivity.Instance.getmMainScene().mBtGameScene.handleString(readMessage);
+                Log.d("BT", "start activity receive message");
                 StartActivity.Instance.getmMainScene().mBtGameScene.HandleMessage(message);
                 break;
             case BTGameScene.MESSAGE_DEVICE_NAME:

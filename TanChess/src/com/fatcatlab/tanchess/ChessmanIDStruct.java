@@ -1,8 +1,6 @@
 package com.fatcatlab.tanchess;
 
-import java.io.Serializable;
-
-public class ChessmanIDStruct extends BaseMessage implements Serializable{
+public class ChessmanIDStruct extends BaseMessage {
 	/**
 	 * 
 	 */

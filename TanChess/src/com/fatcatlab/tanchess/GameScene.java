@@ -7,8 +7,6 @@ import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
-import org.anddev.andengine.entity.particle.ParticleSystem;
-import org.anddev.andengine.entity.particle.emitter.CircleOutlineParticleEmitter;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.shape.Shape;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -28,8 +26,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.MassData;
-
-import dalvik.system.TemporaryDirectory;
 
 import android.util.Log;
 
@@ -187,7 +183,7 @@ public class GameScene extends AbstractGameScene {
     	mBrain.setGameScene(this);
     	
     	MyContactListener listener = new MyContactListener(this);
-    	//锟斤拷锟�inge
+    	//����烽�锟�nge
     	int hingeInterval = 75;
     	int hingeHeightInterval = 2;
     	listener._bodyA = createHinge(StartActivity.CAMERA_WIDTH / 2 - hingeInterval, StartActivity.CAMERA_HEIGHT / 2 - hingeHeightInterval, mHingeRgn);
@@ -220,49 +216,12 @@ public class GameScene extends AbstractGameScene {
        	
     }
     protected void checkTurn() {
-    	
-    	/*
-    	if(mFirstUpdate) {
-    		StartActivity.Instance.mSound.startSound.play();
-    		mFirstUpdate = false;
-    		return;
-    	}
-    	boolean temp = isValid;
-    	isValid = this.mBrain.checkValid();
-    	if(temp == false && isValid == true)	{
-    		StartActivity.Instance.mSound.turnSound.play();
-
-            //[self ContactListenerIssue];
-    		turnValid = true;
-    		if(mBrain.getCurrentPlayer() == Brain.PLAYER1) {
-    			mTurnMark[0].setVisible(true);
-    			mTurnMark[1].setVisible(false);
-    		}
-    		else {
-    			mTurnMark[0].setVisible(false);
-    			mTurnMark[1].setVisible(true);
-    		}
-    	}*/
     	boolean tmp = isValid;
     	isValid = this.mBrain.checkValid();
     	if(tmp == false && isValid == true)
     	{
-    		Log.d("confirm change turn","timer");
-    		this.registerUpdateHandler(new TimerHandler(0.4f, true, new ITimerCallback() {
-    			@Override
-    			public void onTimePassed(final TimerHandler pTimerHandler) {
-    				
-		    		Log.d("confirm change turn","inner timer");
-    				
-    				//System.out.println("tick");
-    				isValid = mBrain.checkValid();
-    		    	if(!isValid)
-    		    		return;
-    		    	
-    		    	unregisterUpdateHandler(pTimerHandler);
-    		    	confirmChangeTurn();
-    			}
-    		}));
+    		Log.d("confirm change turn","confirm change turn3");
+    		confirmChangeTurn();
     	}
     	
     }
@@ -502,7 +461,7 @@ public class GameScene extends AbstractGameScene {
     }
     
     public void stopDestroyChessman() {
-    	this.registerUpdateHandler(new TimerHandler(0.5f, true, new ITimerCallback() {
+    	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				System.out.println("destroy tick");
@@ -563,8 +522,7 @@ public class GameScene extends AbstractGameScene {
     	this.getChild(1).attachChild(sprite);
     	final IEntity lastChild = this.getLastChild();
     	lastChild.attachChild(sprite.mGunsight);
-    	//注锟结触锟斤拷锟斤拷锟斤拷
-    	this.registerTouchArea(sprite);
+    	//娉ㄩ�缁�Е����烽��ゆ������    	this.registerTouchArea(sprite);
     	sprite.body = body;
     	sprite.setGameScene(this);
     	sprite.isForbad = false;
