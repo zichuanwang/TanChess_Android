@@ -1,6 +1,8 @@
 package com.fatcatlab.tanchess;
 
 import org.anddev.andengine.engine.Engine;
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.shape.Shape;
@@ -13,6 +15,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.fatcatlab.tanchess.BTMessage.PacketCodes;
 
 public class BTGameScene extends GameScene {
 
@@ -27,6 +30,7 @@ public class BTGameScene extends GameScene {
 	public static final String DEVICE_NAME = "device_name";
 	public static final String TOAST = "toast";
 	protected boolean mIsHost;
+	private boolean hasReceivedCCA = false;
 
 	// Member object for the chat services
 
@@ -46,9 +50,52 @@ public class BTGameScene extends GameScene {
 		return result;
 	}
 	
+	protected void sendCollisionChessman() {
+		ChessmanCollisionArray array = this.mBrain.generateChessmanCollisionArray();
+		BTMessage message = new BTMessage();
+		message.packetCodes = PacketCodes.CHESSMAN_COLLISION_EVENT;
+		message.baseMessage = array;
+		this.sendMessage(message);
+	}
+	
+	public void updateCollisionChessmanData() {
+		if( this.isInCharge() ) {
+			Log.d("BT","send cca");
+	        this.sendCollisionChessman();
+	        this.hasSentUpdateData = true;
+	        if(!this.mBrain.isForbidPropOn) {
+	        	this.rivalHaschangeTurn = true;
+	        }
+	    }
+	    else {
+	    	Log.d("BT","register new cca timer");
+	    	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
+	    		float time = 0;
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler) {
+					time += 0.3f;
+					Log.d("BT","cca timer:"+new Float(time).toString());
+					if(time >= 5.0f || hasReceivedCCA) {
+						if(hasReceivedCCA) {
+							hasReceivedCCA = false;
+							Log.d("BT","receive cca");
+						}
+						else {
+							Log.d("BT","waiting cca out of time");
+						}
+						unregisterUpdateHandler(pTimerHandler);
+						BTGameScene.this.hasSentUpdateData = true;
+					}
+				}
+			}));
+	    }
+	}
+	
 	protected void changePlayer() {
 		if(this.isInCharge() || mBrain.isForbidPropOn) {
-			// 發送change turn消息
+			BTMessage message = new BTMessage();
+			message.packetCodes = PacketCodes.CHANGE_TURN_EVENT;
+			this.sendMessage(message);
 		}
 		
 		if(mBrain.isForbidPropOn == true)
@@ -140,29 +187,46 @@ public class BTGameScene extends GameScene {
     }
 
 	public void HandleMessage(BTMessage msg) {
-		Log.d("message", msg.packetCodes.name());
+		Log.d("BT", msg.packetCodes.name());
 		switch (msg.packetCodes) {
-		case CHESSMAN_SELECT_EVENT:
+		case CHESSMAN_SELECT_EVENT: {
 			ChessmanIDStruct idStruct = (ChessmanIDStruct)msg.baseMessage;
-			Log.d("CHESSMAN_SELECT_EVENT", new Integer(idStruct.chessmanID).toString());
+			Log.d("BT", "CHESSMAN_SELECT_EVENT"+new Integer(idStruct.chessmanID).toString());
 			mBrain.setChessmanSelected(idStruct.chessmanID);
 			break;
-		case CHESSMAN_ENLARGE_EVENT:
+		}
+		case CHESSMAN_ENLARGE_EVENT: {
 			ChessmanIDStruct idStruct2 = (ChessmanIDStruct)msg.baseMessage;
 			mBrain.setEnlarge(idStruct2.chessmanID);
 			break;
-		case CHESSMAN_CHANGE_EVENT:
+		}
+		case CHESSMAN_CHANGE_EVENT: {
 			ChessmanIDStruct idStruct3 = (ChessmanIDStruct)msg.baseMessage;
 			mBrain.setChange(idStruct3.chessmanID);
 			break;
-		case CHESSMAN_MOVE_EVENT:
+		}
+		case CHESSMAN_MOVE_EVENT: {
 			ChessmanMoveStruct moveStruct = (ChessmanMoveStruct)msg.baseMessage;
-			Log.d("CHESSMAN_MOVE_STRUCT", new Integer(moveStruct.chessmanID).toString());
+			Log.d("BT", "CHESSMAN_MOVE_STRUCT"+new Integer(moveStruct.chessmanID).toString());
 			mBrain.setChessmanMove(moveStruct.chessmanID, moveStruct.x, moveStruct.y);
 			break;
-		case PLAY_SOUND_EVENT:
+		}
+		case CHESSMAN_COLLISION_EVENT: {
+			Log.d("BT", "receive chessman collision event");
+			ChessmanCollisionArray cca = (ChessmanCollisionArray)msg.baseMessage;
+			this.mBrain.reconcileChessmanCollisionArray(cca);
+			hasReceivedCCA = true;
+			break;
+		}
+		case PLAY_SOUND_EVENT: {
 			PropIDStruct propStruct = (PropIDStruct)msg.baseMessage;
 			mBrain.setPropClick(propStruct.PropID, propStruct.category);
+			break;
+		}
+		case CHANGE_TURN_EVENT: {
+			this.rivalHaschangeTurn = true;
+			break;
+		}
 		}
 	}
 
@@ -262,7 +326,7 @@ public class BTGameScene extends GameScene {
     	this.getChild(1).attachChild(sprite);
     	final IEntity lastChild = this.getLastChild();
     	lastChild.attachChild(sprite.mGunsight);
-    	//注锟结触锟斤拷锟斤拷锟斤拷
+    	//娉ㄩ�缁�Е����烽��ゆ������
     	this.registerTouchArea(sprite);
     	sprite.body = body;
     	sprite.setGameScene(this);

@@ -29,7 +29,7 @@ public class MainScene extends AbstractGameScene implements
 	public static final int BLUETOOTH_ON = 1;
 	public static final int BLUETOOTH_CONNECTING = 2;
 
-	// ��ʱ�������looper.prepareֻ����һ�ε�����
+	// 锟斤拷时锟斤拷锟斤拷锟斤拷锟�ooper.prepare只锟斤拷锟斤拷一锟轿碉拷锟斤拷锟斤拷
 	static public boolean firstTimeClickConnection = true;
 
 	public GameScene mGameScene;
@@ -242,7 +242,7 @@ public class MainScene extends AbstractGameScene implements
 		connnectButton.setBlendFunction(GL10.GL_SRC_ALPHA,
 				GL10.GL_ONE_MINUS_SRC_ALPHA);
 		this.mMenuScene.setMenuAnimator(new PositionalMenuAnimator(160 - 85,
-				220, 20));
+				260, 20));
 		this.mMenuScene.buildAnimations();
 		this.mMenuScene.setBackgroundEnabled(false);
 		this.mMenuScene.setOnMenuItemClickListener(this);

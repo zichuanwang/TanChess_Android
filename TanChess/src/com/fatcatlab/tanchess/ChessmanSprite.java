@@ -120,7 +120,7 @@ public class ChessmanSprite extends Sprite {
 			}
 			if (isPropShowing)
 				break;
-
+			
 			this.setAlpha(0.6f);
 			mImage.setBlendFunction(GL10.GL_SRC_ALPHA,
 					GL10.GL_ONE_MINUS_SRC_ALPHA);
