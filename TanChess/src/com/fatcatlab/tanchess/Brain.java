@@ -220,9 +220,8 @@ public class Brain {
 		*/
 
 		// test for get Position
-		/*
 		if (this.mCurrentPlayer != aiController.player)
-			aiController.print(mChessmans, mProps);*/
+			aiController.print(mChessmans, mProps);
 
 		// exchange the player
 		mCurrentPlayer = !mCurrentPlayer;
