@@ -477,7 +477,20 @@ public class Brain {
 	public void setPropClick(int id, int category) {
 		PropSprite propSprite = mProps.get(id);
 		this.gameScene.spendScore(propSprite.score);
-		propSprite.func();
+		switch(propSprite.category) {
+		case PropSprite.POWERUP:
+			StartActivity.Instance.mSound.powerUpSound.play();
+			break;
+		case PropSprite.FORBID:
+			StartActivity.Instance.mSound.teleportEffectSound.play();
+			this.turnOnForbid();
+			break;
+		case PropSprite.ENLARGE:
+			StartActivity.Instance.mSound.changeSound.play();
+			break;
+		case PropSprite.CHANGE:
+			StartActivity.Instance.mSound.teleportSound.play();
+		}
 	}
 
 	public void setChange(int id) {

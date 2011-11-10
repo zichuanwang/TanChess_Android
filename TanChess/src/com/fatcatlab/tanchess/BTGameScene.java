@@ -196,13 +196,13 @@ public class BTGameScene extends GameScene {
 			break;
 		}
 		case CHESSMAN_ENLARGE_EVENT: {
-			ChessmanIDStruct idStruct2 = (ChessmanIDStruct)msg.baseMessage;
-			mBrain.setEnlarge(idStruct2.chessmanID);
+			ChessmanIDStruct idStruct = (ChessmanIDStruct)msg.baseMessage;
+			mBrain.setEnlarge(idStruct.chessmanID);
 			break;
 		}
 		case CHESSMAN_CHANGE_EVENT: {
-			ChessmanIDStruct idStruct3 = (ChessmanIDStruct)msg.baseMessage;
-			mBrain.setChange(idStruct3.chessmanID);
+			ChessmanIDStruct idStruct = (ChessmanIDStruct)msg.baseMessage;
+			mBrain.setChange(idStruct.chessmanID);
 			break;
 		}
 		case CHESSMAN_MOVE_EVENT: {
@@ -326,7 +326,7 @@ public class BTGameScene extends GameScene {
     	this.getChild(1).attachChild(sprite);
     	final IEntity lastChild = this.getLastChild();
     	lastChild.attachChild(sprite.mGunsight);
-    	//娉ㄩ�缁�Е����烽��ゆ������
+
     	this.registerTouchArea(sprite);
     	sprite.body = body;
     	sprite.setGameScene(this);
