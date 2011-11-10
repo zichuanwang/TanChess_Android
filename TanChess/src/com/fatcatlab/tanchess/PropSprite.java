@@ -124,6 +124,7 @@ public class PropSprite extends Sprite {
 			gameScene.turnOnPowerUp();
 			break;
 		case FORBID:
+			StartActivity.Instance.mSound.teleportEffectSound.play();
 			gameScene.turnOnForbid();
 			break;
 		case ENLARGE:

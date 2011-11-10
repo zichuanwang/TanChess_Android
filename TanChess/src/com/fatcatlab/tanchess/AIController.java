@@ -350,7 +350,6 @@ public class AIController {
 				float distance = getPointLineDistance(current.getPosition(), a,
 						-1, c);
 
-				// 如果在外侧，那么算to的半径+挡住的半径
 				if (((current.getPosition().x - from.getPosition().x)
 						* (current.getPosition().x - to.getPosition().x) > 0)
 						&& ((current.getPosition().y - from.getPosition().y)
@@ -369,7 +368,6 @@ public class AIController {
 					}
 				}
 				
-				 // 如果在2个棋子中间，那么要算from的半径+挡住的半径
 				if (((current.getPosition().x - from.getPosition().x)
 						* (current.getPosition().x - to.getPosition().x) < 0)
 						&& ((current.getPosition().y - from.getPosition().y)
@@ -389,7 +387,7 @@ public class AIController {
 	}
 
 	// check if the kick point is out of the border
-	// 计算垂直的交点是否在棋盘里面
+	// 璁＄������氦�规����妫�����
 	public boolean ifKickPointOutOfBoard(ChessmanSprite from,
 			ChessmanSprite current, float k) {
 		float x = ((current.getPosition().x / k) + current.getPosition().y + k
