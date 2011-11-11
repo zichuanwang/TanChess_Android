@@ -52,6 +52,7 @@ public class ChessmanSprite extends Sprite {
 	// private TextureRegion mBabyTextureRgn;
 	protected TiledTextureRegion mGunsightRgn;
 	protected Sprite mImage;
+	protected Sprite mRivalcolor;
 	public GunsightSprite mGunsight;
 
 	protected Engine mEngine;
@@ -66,10 +67,15 @@ public class ChessmanSprite extends Sprite {
 		this.mPhysicsConnector = mPhysicsConnector;
 	}
 
-	public ChessmanSprite(float pX, float pY, TextureRegion pTextureRegion,
+	public ChessmanSprite(float pX, float pY, TextureRegion pTextureRegion, TextureRegion _pTextureRegion,
 			TextureRegion image, Engine pEngine) {
 		super(pX, pY, pTextureRegion);
 		this.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		
+		mRivalcolor =  new Sprite(pTextureRegion.getWidth() / 2 - image.getWidth()
+				/ 2, pTextureRegion.getHeight() / 2 - image.getHeight() / 2,_pTextureRegion);
+		mRivalcolor.setVisible(false);
+		this.attachChild(mRivalcolor);
 
 		mEngine = pEngine;
 		// TODO Auto-generated constructor stub
@@ -288,6 +294,7 @@ public class ChessmanSprite extends Sprite {
 	public void fadeOut() {
 		mImage.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		this.mImage.registerEntityModifier(new AlphaModifier(0.5f, 1, 0));
+		this.mRivalcolor.setVisible( false);
 		this.registerEntityModifier(new AlphaModifier(0.5f, 1, 0));
 	}
 
@@ -356,17 +363,11 @@ public class ChessmanSprite extends Sprite {
 			this.setGroup(Brain.GROUP1);
 		}
 		this.gameScene.getmBrain().exchangePlayerLife();
+		this.isForbad = false;
 		Log.d("group1life",new Integer(this.gameScene.getmBrain().getPlayerLife(false)).toString());
 		Log.d("group2life",new Integer(this.gameScene.getmBrain().getPlayerLife(true)).toString());
-		ChessmanSprite current = this;
-		float rotation = this.getRotation();
-		gameScene.getmBrain().deleteChessmanSprite(this);
-		gameScene
-				.createNewChessman(current.getPosition().x,
-						current.getPosition().y, current.getScale(),
-						current.mImage.getTextureRegion(), current.getGroup(),
-						rotation);
-
+		this.mRivalcolor.setVisible(true);
+		
 		// gameScene.createNewChessman(posX, posY, scale, image, group);
 	}
 	

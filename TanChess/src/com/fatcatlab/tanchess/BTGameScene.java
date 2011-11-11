@@ -66,6 +66,11 @@ public class BTGameScene extends GameScene {
 	        if(!this.mBrain.isForbidPropOn) {
 	        	this.rivalHaschangeTurn = true;
 	        }
+	        else {
+	        	BTMessage message = new BTMessage();
+				message.packetCodes = PacketCodes.CHANGE_TURN_EVENT;
+				this.sendMessage(message);
+	        }
 	    }
 	    else {
 	    	Log.d("BT","register new cca timer");
@@ -133,15 +138,22 @@ public class BTGameScene extends GameScene {
 	
 	
 	protected BTChessmanSprite createChessman(float posX, float posY, float scale, TextureRegion image, boolean group) {
-    	TextureRegion rgn;
+		TextureRegion rgn;
+    	TextureRegion rival_rgn;
     	if(group == Brain.GROUP1)
+    	{
     		rgn = this.mChessmanRedRgn;
+    		rival_rgn = this.mChessmanGreenRgn;
+    	}
     	else
+    	{	
     		rgn = this.mChessmanGreenRgn;
+    		rival_rgn = this.mChessmanRedRgn;
+    	}
     	int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
     	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
     	BTChessmanSprite sprite = new BTChessmanSprite(SCREEN_WIDTH / 2 + posX - rgn.getWidth() / 2,
-    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn, image, mEngine);
+    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
     	sprite.setScale(scale);
     	sprite.setGroup(group);
     	
@@ -283,12 +295,19 @@ public class BTGameScene extends GameScene {
 	public ChessmanSprite createNewChessman(float posX, float posY,
 			float scale, TextureRegion image, boolean group, float rotation) {
 		TextureRegion rgn;
+    	TextureRegion rival_rgn;
     	if(group == Brain.GROUP1)
+    	{
     		rgn = this.mChessmanRedRgn;
+    		rival_rgn = this.mChessmanGreenRgn;
+    	}
     	else
+    	{	
     		rgn = this.mChessmanGreenRgn;
+    		rival_rgn = this.mChessmanRedRgn;
+    	}
     	BTChessmanSprite sprite = new BTChessmanSprite( posX - rgn.getWidth() / 2,
-    			 posY - rgn.getHeight() / 2, rgn, image, mEngine);
+    			 posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
     	sprite.setScale(scale);
     	//because group should be changed so here should use !group
     	sprite.setGroup(!group);

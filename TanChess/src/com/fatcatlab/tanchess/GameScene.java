@@ -282,14 +282,21 @@ public class GameScene extends AbstractGameScene {
     
     protected ChessmanSprite createChessman(float posX, float posY, float scale, TextureRegion image, boolean group) {
     	TextureRegion rgn;
+    	TextureRegion rival_rgn;
     	if(group == Brain.GROUP1)
+    	{
     		rgn = this.mChessmanRedRgn;
+    		rival_rgn = this.mChessmanGreenRgn;
+    	}
     	else
+    	{	
     		rgn = this.mChessmanGreenRgn;
+    		rival_rgn = this.mChessmanRedRgn;
+    	}
     	int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
     	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
     	ChessmanSprite sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - rgn.getWidth() / 2,
-    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn, image, mEngine);
+    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
     	sprite.setScale(scale);
     	sprite.setGroup(group);
     	
@@ -479,12 +486,19 @@ public class GameScene extends AbstractGameScene {
     
     public ChessmanSprite createNewChessman(float posX, float posY, float scale, TextureRegion image, boolean group, float rotation) {
     	TextureRegion rgn;
+    	TextureRegion rival_rgn;
     	if(group == Brain.GROUP1)
+    	{
     		rgn = this.mChessmanRedRgn;
+    		rival_rgn = this.mChessmanGreenRgn;
+    	}
     	else
+    	{	
     		rgn = this.mChessmanGreenRgn;
+    		rival_rgn = this.mChessmanRedRgn;
+    	}
     	ChessmanSprite sprite = new ChessmanSprite( posX - rgn.getWidth() / 2,
-    			 posY - rgn.getHeight() / 2, rgn, image, mEngine);
+    			 posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
     	sprite.setScale(scale);
     	//because group should be changed so here should use !group
     	sprite.setGroup(!group);

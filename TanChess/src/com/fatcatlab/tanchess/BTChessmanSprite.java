@@ -6,9 +6,9 @@ import com.fatcatlab.tanchess.BTMessage.PacketCodes;
 
 public class BTChessmanSprite extends ChessmanSprite {
 
-	public BTChessmanSprite(float pX, float pY, TextureRegion pTextureRegion,
+	public BTChessmanSprite(float pX, float pY, TextureRegion pTextureRegion, TextureRegion _pTextureRegion,
 			TextureRegion image, Engine pEngine) {
-		super(pX, pY, pTextureRegion, image, pEngine);
+		super(pX, pY, pTextureRegion,_pTextureRegion, image, pEngine);
 	}
 
 	@Override

@@ -416,12 +416,10 @@ public class AIController {
 						}
 					}
 				}
-<<<<<<< HEAD
+
 
 				// 如果在2个棋子中间，那么要算from的半径+挡住的半径
-=======
-				
->>>>>>> branch 'master' of git@github.com:bluebitch/TanChess4Android.git
+
 				if (((current.getPosition().x - from.getPosition().x)
 						* (current.getPosition().x - to.getPosition().x) < 0)
 						&& ((current.getPosition().y - from.getPosition().y)
