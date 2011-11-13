@@ -366,7 +366,10 @@ public class ChessmanSprite extends Sprite {
 		this.isForbad = false;
 		Log.d("group1life",new Integer(this.gameScene.getmBrain().getPlayerLife(false)).toString());
 		Log.d("group2life",new Integer(this.gameScene.getmBrain().getPlayerLife(true)).toString());
-		this.mRivalcolor.setVisible(true);
+		if(this.mRivalcolor.isVisible() == false)
+			this.mRivalcolor.setVisible(true);
+		else
+			this.mRivalcolor.setVisible(false);
 		
 		// gameScene.createNewChessman(posX, posY, scale, image, group);
 	}
