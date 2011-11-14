@@ -165,7 +165,6 @@ public class AIController {
 	public boolean canBounceOff(ChessmanSprite from, ChessmanSprite to) {
 		boolean result = false;
 		float mSpeed = 33.0f;
-		float mAngle = 0.0f;
 		float fromDamping = 0.0f;
 		float toDamping = 0.0f;
 		if (from.getScale() == ChessmanSprite.SMALL_SIZE) {
@@ -185,23 +184,6 @@ public class AIController {
 		} else if (to.getScale() == ChessmanSprite.MEDIUM_SIZE) {
 			toDamping = this.M_LinearDamping;
 		}
-
-		// float tan = (to.getPosition().y - from.getPosition().y)
-		// / (to.getPosition().x - from.getPosition().x);
-
-		mAngle = (float) Math.atan((to.getPosition().y - from.getPosition().y)
-				/ (to.getPosition().x - from.getPosition().x));
-		if (mAngle < 0) {
-			if (to.getPosition().y > from.getPosition().y)
-				mAngle = (float) (mAngle + Math.PI);
-			else
-				mAngle = (float) (-mAngle + Math.PI);
-		} else {
-			if (to.getPosition().y < from.getPosition().y)
-				mAngle = (float) (mAngle + Math.PI);
-		}
-
-		// System.out.println("angle:" + mAngle);
 
 		// Vector2 impulse = new Vector2(mSpeed * (float) Math.sin(mAngle),
 		// mSpeed
@@ -271,7 +253,6 @@ public class AIController {
 		float y = 0;
 		x =  chessman.getPosition().x + vector.x * distance;
 		y =  chessman.getPosition().y + vector.y * distance;
-		System.out.println("x:"+x + "   y:"+y);
 		result = ChessmanSprite.checkAlive(x, y);
 		return !result;
 	}
