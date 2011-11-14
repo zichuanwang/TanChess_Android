@@ -262,6 +262,7 @@ public class MainScene extends AbstractGameScene implements
 			/* End Activity. */
 			//mHelpScene.onLoadScene();
 			//ai
+			
 	       	StartActivity.SCENE_STATE = StartActivity.STATE_AIGAME;
 			mGameScene.onLoadScene();
 			return true;

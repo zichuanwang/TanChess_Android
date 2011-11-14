@@ -3,18 +3,9 @@ package com.fatcatlab.tanchess;
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
-import org.anddev.andengine.entity.IEntity;
-import org.anddev.andengine.entity.primitive.Rectangle;
-import org.anddev.andengine.entity.shape.Shape;
-import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
-import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 
 import android.util.Log;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.MassData;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.fatcatlab.tanchess.BTMessage.PacketCodes;
 
 public class BTGameScene extends GameScene {
@@ -138,64 +129,16 @@ public class BTGameScene extends GameScene {
 	
 	
 	protected BTChessmanSprite createChessman(float posX, float posY, float scale, TextureRegion image, boolean group) {
-		TextureRegion rgn;
-    	TextureRegion rival_rgn;
-    	if(group == Brain.GROUP1)
-    	{
-    		rgn = this.mChessmanRedRgn;
-    		rival_rgn = this.mChessmanGreenRgn;
-    	}
-    	else
-    	{	
-    		rgn = this.mChessmanGreenRgn;
-    		rival_rgn = this.mChessmanRedRgn;
-    	}
-    	int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
+		int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
     	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
-    	BTChessmanSprite sprite = new BTChessmanSprite(SCREEN_WIDTH / 2 + posX - rgn.getWidth() / 2,
-    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
-    	sprite.setScale(scale);
-    	sprite.setGroup(group);
-    	
-    	FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(10.0f, 1.0f, 2.0f);
-    	Shape shape = new Rectangle(SCREEN_WIDTH / 2 + posX - 26 * scale, SCREEN_HEIGHT / 2 + posY - 26 * scale, 52 * scale, 52 * scale);
-    	if(group == Brain.GROUP2) {
-    		shape.setRotation(180.0f);
-    	}
-    	Body body = PhysicsFactory.createCircleBody(this.mPhysicsWorld, shape, BodyType.DynamicBody, objectFixtureDef);
-    	body.setBullet(true);
-		MassData mass = body.getMassData();
-		mass.mass = 3.0f;
-		body.setMassData(mass);
-		
-		if( scale == ChessmanSprite.SMALL_SIZE ) {
-			body.setLinearDamping(1.0f);
-			sprite.value = 2;
-		}
-		else if( scale == ChessmanSprite.LARGE_SIZE ) {
-			body.setLinearDamping(4.0f);
-			sprite.value = 8;
-		}
-		else if( scale == ChessmanSprite.MEDIUM_SIZE ) {
-			body.setLinearDamping(2.5f);
-			sprite.value = 4;
-		}
-		body.setAngularDamping(2.0f);
-		PhysicsConnector pc = new PhysicsConnector(sprite, body, true, true);
-		sprite.setmPhysicsConnector(pc);
-		this.mPhysicsWorld.registerPhysicsConnector(pc);
-		
-		//this.mPhysicsWorld.clearPhysicsConnectors();
-    	sprite.setBody(body);
-    	mBrain.addChessman(sprite);
-    	this.getChild(1).attachChild(sprite);
-    	final IEntity lastChild = this.getLastChild();
-    	lastChild.attachChild(sprite.mGunsight);
-    	
-    	this.registerTouchArea(sprite);
-    	sprite.body = body;
-    	sprite.setGameScene(this);
-    	return sprite;
+    	ChessmanSprite sprite;
+    	if(group == Brain.GROUP1)
+    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+    			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanRedRgn, mChessmanGreenRgn, image, mEngine);
+    	else
+    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+        			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanGreenRgn, mChessmanRedRgn, image, mEngine);
+    	return (BTChessmanSprite) this.createChessmanHelp(sprite, posX, posY, scale, image, group);
     }
 
 	public void HandleMessage(BTMessage msg) {
@@ -243,38 +186,9 @@ public class BTGameScene extends GameScene {
 	}
 
 	@Override
-	protected void createProp(float posX, float posY, TextureRegion rgn,
-			boolean group, int category) {
-		
+	protected void createProp(float posX, float posY, TextureRegion rgn, boolean group, int category) {
 		BTPropSprite sprite = new BTPropSprite(posX - rgn.getWidth() / 2, posY - rgn.getHeight() / 2, rgn, mEngine);
-    	sprite.setScale(0.85f);
-    	if(group) {
-    		sprite.setRotation(180.0f);
-    	}
-    	switch(category) {
-    	case PropSprite.POWERUP:
-    		sprite.score = PropSprite.POWERUP_NEED_SCORE;
-    		break;
-    	case PropSprite.FORBID:
-    		sprite.score = PropSprite.FORBID_NEED_SCORE;
-    		break;
-    	case PropSprite.ENLARGE:
-    		sprite.score = PropSprite.ENLARGE_NEED_SCORE;
-    		break;
-    	case PropSprite.CHANGE:
-    		sprite.score = PropSprite.CHANGE_NEED_SCORE;
-    		break;
-    	default:
-    		break;
-    	}
-    	this.registerTouchArea(sprite);
-    	this.getChild(0).attachChild(sprite);
-    	this.mBrain.addProp(sprite);
-    	sprite.category = category;
-    	sprite.group = group;
-    	sprite.setGameScene(this);
-		
-		
+		this.createPropHelp(sprite, rgn, group, category);	
 	}
 
 	public void sendMessage(BTMessage msg) {
@@ -290,69 +204,7 @@ public class BTGameScene extends GameScene {
 	public void handleString(String str) {
 		Log.d("handlerString", str);
 	}
-
-	@Override
-	public ChessmanSprite createNewChessman(float posX, float posY,
-			float scale, TextureRegion image, boolean group, float rotation) {
-		TextureRegion rgn;
-    	TextureRegion rival_rgn;
-    	if(group == Brain.GROUP1)
-    	{
-    		rgn = this.mChessmanRedRgn;
-    		rival_rgn = this.mChessmanGreenRgn;
-    	}
-    	else
-    	{	
-    		rgn = this.mChessmanGreenRgn;
-    		rival_rgn = this.mChessmanRedRgn;
-    	}
-    	BTChessmanSprite sprite = new BTChessmanSprite( posX - rgn.getWidth() / 2,
-    			 posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
-    	sprite.setScale(scale);
-    	//because group should be changed so here should use !group
-    	sprite.setGroup(!group);
-    	
-    	FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(10.0f, 1.0f, 2.0f);
-    	Shape shape = new Rectangle( posX - 26 * scale,  posY - 26 * scale, 52 * scale, 52 * scale);
-    	shape.setRotation(rotation);
-    	sprite.setRotation(rotation);
-    	Body body = PhysicsFactory.createCircleBody(this.mPhysicsWorld, shape, BodyType.DynamicBody, objectFixtureDef);
-    	body.setBullet(true);
-    	MassData mass = body.getMassData();
-		mass.mass = 3.0f;
-		body.setMassData(mass);
-		
-		if( scale == ChessmanSprite.SMALL_SIZE ) {
-			body.setLinearDamping(1.0f);
-			sprite.value = 2;
-		}
-		else if( scale == ChessmanSprite.LARGE_SIZE ) {
-			body.setLinearDamping(4.0f);
-			sprite.value = 8;
-		}
-		else if( scale == ChessmanSprite.MEDIUM_SIZE ) {
-			body.setLinearDamping(2.5f);
-			sprite.value = 4;
-		}
-		body.setAngularDamping(2.0f);
-		PhysicsConnector pc = new PhysicsConnector(sprite, body, true, true);
-		sprite.setmPhysicsConnector(pc);
-		this.mPhysicsWorld.registerPhysicsConnector(pc);
-		
-		//this.mPhysicsWorld.clearPhysicsConnectors();
-    	sprite.setBody(body);
-    	mBrain.addChessman(sprite);
-    	this.getChild(1).attachChild(sprite);
-    	final IEntity lastChild = this.getLastChild();
-    	lastChild.attachChild(sprite.mGunsight);
-
-    	this.registerTouchArea(sprite);
-    	sprite.body = body;
-    	sprite.setGameScene(this);
-    	sprite.isForbad = false;
-    	return sprite;
-	}
-
+	
 	// use for test
 	public void sendMessage(String message) {
 		// Check that we're actually connected before trying anything

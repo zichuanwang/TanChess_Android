@@ -39,6 +39,7 @@ public class ChessmanSprite extends Sprite {
 	public boolean isChange = false;
 	public boolean isEnlarge = false;
 	public boolean isPropShowing = false;
+	public boolean isBetrayed = false;
 	public int value;
 	public Body body;
 	protected PhysicsConnector mPhysicsConnector;
@@ -75,6 +76,7 @@ public class ChessmanSprite extends Sprite {
 		mRivalcolor =  new Sprite(pTextureRegion.getWidth() / 2 - image.getWidth()
 				/ 2, pTextureRegion.getHeight() / 2 - image.getHeight() / 2,_pTextureRegion);
 		mRivalcolor.setVisible(false);
+		mRivalcolor.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		this.attachChild(mRivalcolor);
 
 		mEngine = pEngine;
@@ -293,9 +295,28 @@ public class ChessmanSprite extends Sprite {
 
 	public void fadeOut() {
 		mImage.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		this.mImage.registerEntityModifier(new AlphaModifier(0.5f, 1, 0));
-		this.mRivalcolor.setVisible( false);
-		this.registerEntityModifier(new AlphaModifier(0.5f, 1, 0));
+		this.mImage.registerEntityModifier(new AlphaModifier(0.3f, 1, 0));
+		if(isBetrayed) {
+			this.setAlpha(0);
+			this.mRivalcolor.registerEntityModifier(new AlphaModifier(0.3f, 1, 0));
+		}
+		else {
+			this.mRivalcolor.setVisible(false);
+			this.registerEntityModifier(new AlphaModifier(0.3f, 1, 0));
+		}
+	}
+	
+	public void fadeIn() {
+		mImage.setBlendFunction(GL10.GL_ONE, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		this.mImage.registerEntityModifier(new AlphaModifier(0.3f, 0, 1));
+		if(isBetrayed) {
+			this.setAlpha(1);
+			this.mRivalcolor.registerEntityModifier(new AlphaModifier(0.3f, 0, 1));
+		}
+		else {
+			this.mRivalcolor.setVisible(false);
+			this.registerEntityModifier(new AlphaModifier(0.3f, 0, 1));
+		}
 	}
 
 	public boolean getGroup() {
@@ -366,10 +387,11 @@ public class ChessmanSprite extends Sprite {
 		this.isForbad = false;
 		Log.d("group1life",new Integer(this.gameScene.getmBrain().getPlayerLife(false)).toString());
 		Log.d("group2life",new Integer(this.gameScene.getmBrain().getPlayerLife(true)).toString());
-		if(this.mRivalcolor.isVisible() == false)
+		if(!isBetrayed)
 			this.mRivalcolor.setVisible(true);
 		else
 			this.mRivalcolor.setVisible(false);
+		isBetrayed = !isBetrayed;
 		
 		// gameScene.createNewChessman(posX, posY, scale, image, group);
 	}
