@@ -281,25 +281,23 @@ public class GameScene extends AbstractGameScene {
     protected void onLoadComplete() {}
     
     protected ChessmanSprite createChessman(float posX, float posY, float scale, TextureRegion image, boolean group) {
-    	TextureRegion rgn;
-    	TextureRegion rival_rgn;
-    	if(group == Brain.GROUP1)
-    	{
-    		rgn = this.mChessmanRedRgn;
-    		rival_rgn = this.mChessmanGreenRgn;
-    	}
-    	else
-    	{	
-    		rgn = this.mChessmanGreenRgn;
-    		rival_rgn = this.mChessmanRedRgn;
-    	}
     	int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
     	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
-    	ChessmanSprite sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - rgn.getWidth() / 2,
-    			SCREEN_HEIGHT / 2 + posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
+    	ChessmanSprite sprite;
+    	if(group == Brain.GROUP1)
+    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+    			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanRedRgn, mChessmanGreenRgn, image, mEngine);
+    	else
+    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+        			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanGreenRgn, mChessmanRedRgn, image, mEngine);
+    	return this.createChessmanHelp(sprite, posX, posY, scale, image, group);
+    }
+    
+    protected ChessmanSprite createChessmanHelp(ChessmanSprite sprite, float posX, float posY, float scale, TextureRegion image, boolean group) {
+    	int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
+    	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
     	sprite.setScale(scale);
     	sprite.setGroup(group);
-    	
     	FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(10.0f, 1.0f, 2.0f);
     	Shape shape = new Rectangle(SCREEN_WIDTH / 2 + posX - 26 * scale, SCREEN_HEIGHT / 2 + posY - 26 * scale, 52 * scale, 52 * scale);
     	if(group == Brain.GROUP2) {
@@ -380,9 +378,7 @@ public class GameScene extends AbstractGameScene {
     	lastChild.attachChild(sprite);
     	return body;
     }
-    
-    protected void createProp(float posX, float posY, TextureRegion rgn, boolean group, int category) {
-    	PropSprite sprite = new PropSprite(posX - rgn.getWidth() / 2, posY - rgn.getHeight() / 2, rgn, mEngine);
+    protected void createPropHelp(PropSprite sprite, TextureRegion rgn, boolean group, int category) {
     	sprite.setScale(0.85f);
     	if(group) {
     		sprite.setRotation(180.0f);
@@ -409,6 +405,10 @@ public class GameScene extends AbstractGameScene {
     	sprite.category = category;
     	sprite.group = group;
     	sprite.setGameScene(this);
+    }
+    protected void createProp(float posX, float posY, TextureRegion rgn, boolean group, int category) {
+    	PropSprite sprite = new PropSprite(posX - rgn.getWidth() / 2, posY - rgn.getHeight() / 2, rgn, mEngine);
+    	this.createPropHelp(sprite, rgn, group, category);
     }
     
     protected void changePlayer() {
@@ -463,10 +463,6 @@ public class GameScene extends AbstractGameScene {
     	mBrain.shutDownExchange();
     }
     
-    public void destroyBody(Body body) {
-    	this.mPhysicsWorld.destroyBody(body);
-    }
-    
     public void stopDestroyChessman() {
     	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
 			@Override
@@ -483,65 +479,6 @@ public class GameScene extends AbstractGameScene {
     public Brain getmBrain() {
 		return mBrain;
 	}
-    
-    public ChessmanSprite createNewChessman(float posX, float posY, float scale, TextureRegion image, boolean group, float rotation) {
-    	TextureRegion rgn;
-    	TextureRegion rival_rgn;
-    	if(group == Brain.GROUP1)
-    	{
-    		rgn = this.mChessmanRedRgn;
-    		rival_rgn = this.mChessmanGreenRgn;
-    	}
-    	else
-    	{	
-    		rgn = this.mChessmanGreenRgn;
-    		rival_rgn = this.mChessmanRedRgn;
-    	}
-    	ChessmanSprite sprite = new ChessmanSprite( posX - rgn.getWidth() / 2,
-    			 posY - rgn.getHeight() / 2, rgn,rival_rgn, image, mEngine);
-    	sprite.setScale(scale);
-    	//because group should be changed so here should use !group
-    	sprite.setGroup(!group);
-    	
-    	FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(10.0f, 1.0f, 2.0f);
-    	Shape shape = new Rectangle( posX - 26 * scale,  posY - 26 * scale, 52 * scale, 52 * scale);
-    	shape.setRotation(rotation);
-    	sprite.setRotation(rotation);
-    	Body body = PhysicsFactory.createCircleBody(this.mPhysicsWorld, shape, BodyType.DynamicBody, objectFixtureDef);
-    	body.setBullet(true);
-    	MassData mass = body.getMassData();
-		mass.mass = 3.0f;
-		body.setMassData(mass);
-		
-		if( scale == ChessmanSprite.SMALL_SIZE ) {
-			body.setLinearDamping(1.0f);
-			sprite.value = 2;
-		}
-		else if( scale == ChessmanSprite.LARGE_SIZE ) {
-			body.setLinearDamping(4.0f);
-			sprite.value = 8;
-		}
-		else if( scale == ChessmanSprite.MEDIUM_SIZE ) {
-			body.setLinearDamping(2.5f);
-			sprite.value = 4;
-		}
-		body.setAngularDamping(2.0f);
-		PhysicsConnector pc = new PhysicsConnector(sprite, body, true, true);
-		sprite.setmPhysicsConnector(pc);
-		this.mPhysicsWorld.registerPhysicsConnector(pc);
-		
-		//this.mPhysicsWorld.clearPhysicsConnectors();
-    	sprite.setBody(body);
-    	mBrain.addChessman(sprite);
-    	this.getChild(1).attachChild(sprite);
-    	final IEntity lastChild = this.getLastChild();
-    	lastChild.attachChild(sprite.mGunsight);
-    	//娉ㄩ�缁�Е����烽��ゆ������    	this.registerTouchArea(sprite);
-    	sprite.body = body;
-    	sprite.setGameScene(this);
-    	sprite.isForbad = false;
-    	return sprite;
-    }
     
     public void popupMenu()
     {

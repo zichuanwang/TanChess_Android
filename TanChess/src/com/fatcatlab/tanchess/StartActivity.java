@@ -190,9 +190,9 @@ public class StartActivity extends BaseGameActivity {
                 }
                 break;
             case BTGameScene.MESSAGE_WRITE:
-                byte[] writeBuf = (byte[]) msg.obj;
+                //byte[] writeBuf = (byte[]) msg.obj;
                 // construct a string from the buffer
-                String writeMessage = new String(writeBuf);
+                //String writeMessage = new String(writeBuf);
                 break;
             case BTGameScene.MESSAGE_READ:
                 BTMessage message = (BTMessage) msg.obj;

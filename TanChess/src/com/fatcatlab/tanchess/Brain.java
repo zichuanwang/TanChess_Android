@@ -44,9 +44,8 @@ public class Brain {
 
 		if (StartActivity.SCENE_STATE == StartActivity.STATE_AIGAME) {
 			this.is_AI = true;
+			aiController = new AIController(!mCurrentPlayer);
 		}
-
-		aiController = new AIController(!mCurrentPlayer);
 	}
 
 	public void init() {
@@ -95,8 +94,6 @@ public class Brain {
 		for (Iterator<ChessmanSprite> it = mToDestroy.iterator(); it.hasNext();) {
 			sprite = (ChessmanSprite) (it.next());
 			sprite.body.setActive(false);
-			gameScene.destroyBody(sprite.body);
-			sprite.body = null;
 		}
 		mToDestroy.clear();
 	}
@@ -220,8 +217,10 @@ public class Brain {
 		*/
 
 		// test for get Position
-		if (this.mCurrentPlayer != aiController.player)
-			aiController.print(mChessmans, mProps);
+		if(this.is_AI) {
+			if (this.mCurrentPlayer != aiController.player)
+				aiController.print(mChessmans, mProps);
+		}
 
 		// exchange the player
 		mCurrentPlayer = !mCurrentPlayer;
@@ -384,23 +383,6 @@ public class Brain {
 		gameScene = scene;
 	}
 
-	public void deleteChessmanSprite(ChessmanSprite cs) {
-		Enumeration<Integer> en = mChessmans.keys();
-		while (en.hasMoreElements()) {
-			Integer key = (Integer) en.nextElement();
-			ChessmanSprite sprite = mChessmans.get(key);
-			if (sprite == cs) {
-				// sprite.body.setActive(false);
-				this.mChessmans.remove(cs);
-				gameScene.getChild(1).detachChild(cs);
-				gameScene.destroyBody(cs.body);
-				sprite = null;
-				cs = null;
-				break;
-			}
-		}
-	}
-
 	public boolean getCurrentPlayer() {
 		return mCurrentPlayer;
 	}
@@ -524,8 +506,63 @@ public class Brain {
 			ChessmanCollisionStruct ccs = array.getCSSAtIndex(i);
 			ChessmanSprite sprite = this.mChessmans.get(ccs.ID);
 			Log.d("BT","ID:"+new Integer(ccs.ID).toString());
-			if(sprite.body != null)
-				sprite.body.setTransform(new Vector2(ccs.Position_x / 32, ccs.Position_y / 32), sprite.body.getAngle());
+			boolean selfDied = ChessmanSprite.checkAlive(sprite.getPosition().x, sprite.getPosition().y);
+			boolean rivalDied = ChessmanSprite.checkAlive(ccs.Position_x, ccs.Position_y);
+			if(selfDied && !rivalDied) {
+				sprite.isDead = false;
+				sprite.body.setActive(true);
+				sprite.fadeIn();
+				if(this.mCurrentPlayer == Brain.PLAYER1) {
+					if(sprite.getGroup() == Brain.PLAYER1) {
+						this.mPlayer1Life++;
+						this.mPlayer1Score -= sprite.value;
+					}
+					else {
+						this.mPlayer2Life++;
+						this.mPlayer1Score -= sprite.value / 2;
+						this.mPlayer2Score -= sprite.value;
+					}
+				}
+				else {
+					if(sprite.getGroup() == Brain.PLAYER1) {
+						this.mPlayer1Life++;
+						this.mPlayer1Score -= sprite.value / 2;
+						this.mPlayer2Score -= sprite.value;
+					}
+					else {
+						this.mPlayer2Life++;
+						this.mPlayer2Score -= sprite.value;
+					}
+				}
+			}
+			else if(!selfDied && rivalDied) {
+				sprite.isDead = true;
+				sprite.body.setActive(false);
+				sprite.fadeOut();
+				if(this.mCurrentPlayer == Brain.PLAYER1) {
+					if(sprite.getGroup() == Brain.PLAYER1) {
+						this.mPlayer1Life--;
+						this.mPlayer1Score += sprite.value;
+					}
+					else {
+						this.mPlayer2Life--;
+						this.mPlayer1Score += sprite.value / 2;
+						this.mPlayer2Score += sprite.value;
+					}
+				}
+				else {
+					if(sprite.getGroup() == Brain.PLAYER1) {
+						this.mPlayer1Life--;
+						this.mPlayer1Score += sprite.value / 2;
+						this.mPlayer2Score += sprite.value;
+					}
+					else {
+						this.mPlayer2Life--;
+						this.mPlayer2Score += sprite.value;
+					}
+				}
+			}
+			sprite.body.setTransform(new Vector2(ccs.Position_x / 32, ccs.Position_y / 32), sprite.body.getAngle());
 		}
 	}
 }
