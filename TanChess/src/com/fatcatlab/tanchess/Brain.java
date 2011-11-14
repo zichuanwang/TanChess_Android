@@ -41,11 +41,6 @@ public class Brain {
 	Brain(int player1Life, int player2Life) {
 		mPlayer1Life = player1Life;
 		mPlayer2Life = player2Life;
-
-		if (StartActivity.SCENE_STATE == StartActivity.STATE_AIGAME) {
-			this.is_AI = true;
-			aiController = new AIController(!mCurrentPlayer);
-		}
 	}
 
 	public void init() {
@@ -60,6 +55,10 @@ public class Brain {
 				chessman.isForbad = false;
 			else
 				chessman.isForbad = true;
+		}
+		if (StartActivity.SCENE_STATE == StartActivity.STATE_AIGAME) {
+			this.is_AI = true;
+			aiController = new AIController(PLAYER2);
 		}
 	}
 
@@ -178,12 +177,12 @@ public class Brain {
 			if (mCurrentPlayer == PLAYER1) {
 				if (chessman.getGroup() == GROUP1)
 					chessman.isForbad = true;
-				else
+				else if(this.is_AI == false)
 					chessman.isForbad = false;
 			} else {
 				if (chessman.getGroup() == GROUP1)
 					chessman.isForbad = false;
-				else
+				else 
 					chessman.isForbad = true;
 			}
 		}
@@ -195,7 +194,7 @@ public class Brain {
 			if (mCurrentPlayer == PLAYER1) {
 				if (sprite.group == GROUP1)
 					sprite.isForbad = true;
-				else
+				else if(this.is_AI == false)
 					sprite.isForbad = false;
 			} else {
 				if (sprite.group == GROUP1)
@@ -205,26 +204,15 @@ public class Brain {
 			}
 		}
 
-		//forbid to operate the ai player's chess
-		/*
-		Enumeration<Integer> en2 = mChessmans.keys();
-		while (en2.hasMoreElements()) {
-			Integer key = (Integer) en2.nextElement();
-			ChessmanSprite chessman = mChessmans.get(key);
-			if (chessman.getGroup() == aiController.player)
-				chessman.isForbad = true;
-		}
-		*/
-
-		// test for get Position
-		if(this.is_AI) {
-			if (this.mCurrentPlayer != aiController.player)
-				aiController.print(mChessmans, mProps);
-		}
-
 		// exchange the player
 		mCurrentPlayer = !mCurrentPlayer;
-
+		// test for get Position
+		if(this.is_AI) {
+			if (this.mCurrentPlayer == aiController.player) {
+				Log.d("AI TEST", "print");
+				aiController.print(mChessmans, mProps);
+			}
+		}
 	}
 
 	public void checkPropValid() {
