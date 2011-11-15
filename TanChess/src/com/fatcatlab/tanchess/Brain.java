@@ -59,6 +59,7 @@ public class Brain {
 		if (StartActivity.SCENE_STATE == StartActivity.STATE_AIGAME) {
 			this.is_AI = true;
 			aiController = new AIController(PLAYER2);
+			aiController.init(this.mChessmans, this.mProps);
 		}
 	}
 
@@ -210,7 +211,7 @@ public class Brain {
 		if(this.is_AI) {
 			if (this.mCurrentPlayer == aiController.player) {
 				Log.d("AI TEST", "print");
-				aiController.print(mChessmans, mProps);
+				aiController.simulate();
 			}
 		}
 	}

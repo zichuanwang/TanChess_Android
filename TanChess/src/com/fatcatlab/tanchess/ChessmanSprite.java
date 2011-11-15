@@ -31,6 +31,16 @@ public class ChessmanSprite extends Sprite {
 	public static final float SMALL_SIZE = 0.35f;
 	public static final float MEDIUM_SIZE = 0.47f;
 	public static final float LARGE_SIZE = 0.67f;
+	
+	private static final int HIGH_SAFETY_ZONE_WIDTH = 100, HIGH_SAFETY_ZONE_HEIGHT = 80;
+	private static final int NORMAL_SAFETY_ZONE_WIDTH = 180, NORMAL_SAFETY_ZONE_HEIGHT = 270;
+	private static final int HIGH_SAFETY_COEFFICIENT = 50;
+	private static final int NORMAL_SAFETY_COEFFICIENT = 30;
+	private static final int LOW_SAFETY_COEFFICIENT = 10;
+	
+	private static final int LARGE_CHESSMAN_VALUE = 8;
+	private static final int MEDIUM_CHESSMAN_VALUE = 4;
+	private static final int SMALL_CHESSMAN_VALUE = 2;
 
 	public boolean isDead = false;
 	public boolean isForbad = true;
@@ -255,22 +265,57 @@ public class ChessmanSprite extends Sprite {
 	public void setBody(Body body) {
 		mBody = body;
 	}
-	public boolean checkAlive() {
+	
+	private boolean checkInZone(int zoneWidth, int zoneHeight) {
+		return ChessmanSprite.checkInZone(zoneWidth, zoneHeight, this.getPosition());
+	}
+	
+	private static boolean checkInZone(int zoneWidth, int zoneHeight, Vector2 pos) {
 		int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
 		int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
-		if (this.getPosition().x < halfScreenWidth - GameScene.CHESSBOARD_WIDTH
-				/ 2
-				|| this.getPosition().x > halfScreenWidth
-						+ GameScene.CHESSBOARD_WIDTH / 2) {
+		if (pos.x < halfScreenWidth - zoneWidth / 2
+				|| pos.x > halfScreenWidth + zoneWidth / 2) {
 			return false;
 		}
-		if (this.getPosition().y < halfScreenHeight
-				- GameScene.CHESSBOARD_HEIGHT / 2
-				|| this.getPosition().y > halfScreenHeight
-						+ GameScene.CHESSBOARD_HEIGHT / 2) {
+		if (pos.y < halfScreenHeight - zoneHeight / 2
+				|| pos.y > halfScreenHeight + zoneHeight / 2) {
 			return false;
 		}
 		return true;
+	}
+	
+	public static int calculateValue(int value, Vector2 pos) {
+		int result = ChessmanSprite.getRealValue(value);
+		if(ChessmanSprite.checkInZone(HIGH_SAFETY_ZONE_WIDTH, HIGH_SAFETY_ZONE_HEIGHT, pos)) {
+			result *= ChessmanSprite.HIGH_SAFETY_COEFFICIENT;
+		}
+		else if(ChessmanSprite.checkInZone(NORMAL_SAFETY_ZONE_WIDTH, NORMAL_SAFETY_ZONE_HEIGHT, pos)) {
+			result *= ChessmanSprite.NORMAL_SAFETY_COEFFICIENT;
+		}
+		else {
+			result *= ChessmanSprite.LOW_SAFETY_COEFFICIENT;
+		}
+		return result;
+	}
+	
+	private static int getRealValue(int value) {
+		int realValue = value;
+		if(value == ChessmanSprite.SMALL_CHESSMAN_VALUE) {
+			realValue /= 2;
+		}
+		else if(value == ChessmanSprite.LARGE_CHESSMAN_VALUE) {
+			realValue *= 3;
+			realValue /= 2;
+		}
+		return realValue;
+	}
+	
+	public int calculateValue() {
+		return ChessmanSprite.calculateValue(this.value, this.getPosition());
+	}
+	
+	public boolean checkAlive() {
+		return this.checkInZone(GameScene.CHESSBOARD_WIDTH, GameScene.CHESSBOARD_HEIGHT);
 	} 
 	
 	
@@ -278,16 +323,10 @@ public class ChessmanSprite extends Sprite {
 	{
 		int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
 		int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
-		if (x < halfScreenWidth - GameScene.CHESSBOARD_WIDTH
-				/ 2
-				|| x > halfScreenWidth
-						+ GameScene.CHESSBOARD_WIDTH / 2) {
+		if (x < halfScreenWidth - GameScene.CHESSBOARD_WIDTH / 2 || x > halfScreenWidth + GameScene.CHESSBOARD_WIDTH / 2) {
 			return false;
 		}
-		if (y < halfScreenHeight
-				- GameScene.CHESSBOARD_HEIGHT / 2
-				|| y > halfScreenHeight
-						+ GameScene.CHESSBOARD_HEIGHT / 2) {
+		if (y < halfScreenHeight - GameScene.CHESSBOARD_HEIGHT / 2 || y > halfScreenHeight + GameScene.CHESSBOARD_HEIGHT / 2) {
 			return false;
 		}
 		return true;
@@ -359,10 +398,10 @@ public class ChessmanSprite extends Sprite {
 		newBody.setMassData(mass);
 		if (this.getScale() == ChessmanSprite.LARGE_SIZE) {
 			newBody.setLinearDamping(4.0f);
-			this.value = 8;
+			this.value = ChessmanSprite.LARGE_CHESSMAN_VALUE;
 		} else if (this.getScale() == ChessmanSprite.MEDIUM_SIZE) {
 			newBody.setLinearDamping(2.5f);
-			this.value = 4;
+			this.value = ChessmanSprite.MEDIUM_CHESSMAN_VALUE;
 		}
 		newBody.setAngularDamping(2.0f);
 		this.gameScene.getmPhysicsWorld().destroyBody(this.body);
