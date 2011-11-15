@@ -80,6 +80,9 @@ public class AIController {
 
 	public void simulate() {
 		this.calculate();
+		//ChessmanSprite chessman = allChessmans.get(new Integer(19));
+		//ChessmanSprite check = allChessmans.get(new Integer(27));
+		//this.checkMoveInLine(chessman , getMoveToVector2(chessman) , check.getPosition() , chessman.getScale()*26);
 	}
 	
 	protected void doAttack() {
@@ -142,8 +145,8 @@ public class AIController {
 	}
 	
 	public void calculate() {
-		//doDefence();	
-		doAttack();
+		doDefence();	
+		//doAttack();
 	}
 
 	public boolean canBounceOff(ChessmanSprite from, ChessmanSprite to) {
@@ -300,12 +303,12 @@ public class AIController {
 		return true;
 	}
 	
-	public boolean checkMoveInLine(ChessmanSprite from, Vector2 toPosition,
-			Vector2 currentPosition, float currentR) {
+	public boolean checkChessmanInLine(ChessmanSprite from, Vector2 toVector,
+			Vector2 currentPosition, float currentR, float from2ToDistance) {
 		float point2LineDistance;
-		if (toPosition.x - from.getPosition().x != 0) {
-			float k = (toPosition.y - from.getPosition().y)
-					/ (toPosition.x - from.getPosition().x);
+		if (toVector.x - from.getPosition().x != 0) {
+			float k = (toVector.y - from.getPosition().y)
+					/ (toVector.x - from.getPosition().x);
 			float a = k;
 			float c = -k * from.getPosition().x + from.getPosition().y;
 			point2LineDistance = getPointLineDistance(currentPosition, a, -1, c);
@@ -316,8 +319,20 @@ public class AIController {
 		if (fromR < point2LineDistance - currentR) {
 			return false;
 		}
+		// 检查是否同向
+		Vector2 from2ToVec = new Vector2(toVector.x
+				- from.getPosition().x, toVector.y
+				- from.getPosition().y);
+		Vector2 current2ToVec = new Vector2(toVector.x
+				- currentPosition.x, toVector.y - currentPosition.y);
+		float includeAngle = current2ToVec.x * from2ToVec.x
+				+ current2ToVec.y * from2ToVec.y;
+		if (includeAngle > 0) {
+			return false;
+		}
 		return true;
 	}
+	
 	
 	protected void doMoveAction(ChessmanSprite from, Vector2 toPos, float speed) {
 		Vector2 fromPos = from.getPosition();
@@ -378,13 +393,20 @@ public class AIController {
 				continue;
 			//check if there is some chessman between current and the point
 			Vector2 destinationVector2 = getMoveToVector2(current);
-			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext();) {
+			boolean needCheck = true;
+			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext() && needCheck;) {
 				Integer key2 = (Integer) it2.next();
 				ChessmanSprite check = allChessmans.get(key2);
 				if (check.isDead )
 					continue;
-				checkMoveInLine(current, destinationVector2, check.getPosition(), check.getScale()*26);
+				float from2ToDistance = current.getPosition().dst(check.getPosition());
+				if( checkChessmanInLine(current, destinationVector2, check.getPosition(), current.getScale()*26, from2ToDistance) )
+				{
+					needCheck = false;
+				}
 			}
+			if(needCheck == false)
+				continue;
 			
 			int currentBenefit = ChessmanSprite.calculateValue(current.value, bestPos) - current.calculateValue();
 			if(currentBenefit >= maxBenefit) {
