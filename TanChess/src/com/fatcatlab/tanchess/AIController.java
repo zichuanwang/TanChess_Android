@@ -300,6 +300,25 @@ public class AIController {
 		return true;
 	}
 	
+	public boolean checkMoveInLine(ChessmanSprite from, Vector2 toPosition,
+			Vector2 currentPosition, float currentR) {
+		float point2LineDistance;
+		if (toPosition.x - from.getPosition().x != 0) {
+			float k = (toPosition.y - from.getPosition().y)
+					/ (toPosition.x - from.getPosition().x);
+			float a = k;
+			float c = -k * from.getPosition().x + from.getPosition().y;
+			point2LineDistance = getPointLineDistance(currentPosition, a, -1, c);
+		} else {
+			point2LineDistance = getPointLineDistance(currentPosition, 1, 0, -1 * from.getPosition().x);
+		}
+		float fromR = 26 * from.getScale();
+		if (fromR < point2LineDistance - currentR) {
+			return false;
+		}
+		return true;
+	}
+	
 	protected void doMoveAction(ChessmanSprite from, Vector2 toPos, float speed) {
 		Vector2 fromPos = from.getPosition();
 		float distance = getDistance(fromPos, toPos);
@@ -357,6 +376,16 @@ public class AIController {
 			ChessmanSprite current = myChessmans.get(key);
 			if (current.isDead)
 				continue;
+			//check if there is some chessman between current and the point
+			Vector2 destinationVector2 = getMoveToVector2(current);
+			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext();) {
+				Integer key2 = (Integer) it2.next();
+				ChessmanSprite check = allChessmans.get(key2);
+				if (check.isDead )
+					continue;
+				checkMoveInLine(current, destinationVector2, check.getPosition(), check.getScale()*26);
+			}
+			
 			int currentBenefit = ChessmanSprite.calculateValue(current.value, bestPos) - current.calculateValue();
 			if(currentBenefit >= maxBenefit) {
 				result = current;
@@ -371,16 +400,21 @@ public class AIController {
 		// check if there exits other chessmans between it and the point.
 		ChessmanSprite selectedChessman = getMostBeneficialDefenceChessman();
 		Log.d("DEFENCE", "do defence:"+selectedChessman.chessmanID);
+		Vector2 toPos = getMoveToVector2(selectedChessman);
+		this.chessmanMoveTo(selectedChessman, toPos);
+	}
+	
+	protected Vector2 getMoveToVector2(ChessmanSprite current){
 		boolean moveToLeftMiddle = true;
-		if(selectedChessman.getPosition().x > halfScreenWidth) {
+		if(current.getPosition().x > halfScreenWidth) {
 			moveToLeftMiddle = false;
 		}
 		Vector2 toPos = null;
-		float selectedR = selectedChessman.getScale() * 26;
+		float selectedR = current.getScale() * 26;
 		if(moveToLeftMiddle)
 			toPos = new Vector2(this.L_Hinge.x + this.hingeR + selectedR + 5, this.halfScreenHeight);
 		else
 			toPos = new Vector2(this.R_Hinge.x - this.hingeR - selectedR - 5, this.halfScreenHeight);
-		this.chessmanMoveTo(selectedChessman, toPos);
+		return toPos;
 	}
 }
