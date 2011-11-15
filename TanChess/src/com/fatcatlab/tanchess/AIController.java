@@ -406,7 +406,7 @@ public class AIController {
 	
 	protected Vector2 getMoveToVector2(ChessmanSprite current){
 		boolean moveToLeftMiddle = true;
-		if(current.getPosition().x > halfScreenWidth) {
+		if(current.getPosition().x < halfScreenWidth) {
 			moveToLeftMiddle = false;
 		}
 		Vector2 toPos = null;
