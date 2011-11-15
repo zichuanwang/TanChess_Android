@@ -134,6 +134,9 @@ public class StartActivity extends BaseGameActivity {
 				this.reloadMainScene();
 				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 				break;
+			case STATE_AIGAME:
+				this.reloadMainScene();
+				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 			}
 			return true;
 		}

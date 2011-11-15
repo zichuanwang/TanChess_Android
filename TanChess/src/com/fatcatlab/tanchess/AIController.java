@@ -119,6 +119,7 @@ public class AIController {
 		int count = 0;
 		
 		System.out.println(checkBumpHinge(allChessmans.get(new Integer(17)),allChessmans.get(new Integer(12))));
+		System.out.println(ChessmanSprite.checkAlive(160, 580));
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it
@@ -211,9 +212,8 @@ public class AIController {
 
 		float distance_can_move = this.getMoveDistance(mSpeed, toDamping) * 32;
 
-		System.out.println("canmove :" + distance_can_move);
 		
-		float coefficient = 1 / distance_can_move ;
+		float coefficient = 1 / (distance_in_box2d * mPixelToMeterRatio) ;
 		Vector2 from2ToVec = new Vector2(to.getPosition().x
 				- from.getPosition().x, to.getPosition().y
 				- from.getPosition().y);
@@ -251,9 +251,13 @@ public class AIController {
 		boolean result = false;
 		float x = 0;
 		float y = 0;
+		System.out.println("canmove :" + distance);
 		x =  chessman.getPosition().x + vector.x * distance;
 		y =  chessman.getPosition().y + vector.y * distance;
+		System.out.println("x pos:" + x);
+		System.out.println("y pos:" + y);
 		result = ChessmanSprite.checkAlive(x, y);
+		System.out.println("result:"+result);
 		return !result;
 	}
 
