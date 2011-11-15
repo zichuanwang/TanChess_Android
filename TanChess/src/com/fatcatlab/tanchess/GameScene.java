@@ -7,6 +7,7 @@ import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
+import org.anddev.andengine.entity.modifier.AlphaModifier;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.shape.Shape;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -32,6 +33,7 @@ import android.util.Log;
 public class GameScene extends AbstractGameScene {
 	
 	public Texture mTexture;
+	public Texture mPropShowTexture;
 	protected TextureRegion mChessboard;
 	protected TextureRegion mBackground;
 	public TextureRegion getmBackground() {
@@ -56,6 +58,15 @@ public class GameScene extends AbstractGameScene {
 	protected TextureRegion mEnlargePropRgn;
 	protected TextureRegion mChangePropRgn;
 	protected TextureRegion mTurnMarkRgn;
+	protected TextureRegion mPowerUpShowRgn;
+	protected TextureRegion mForbidShowRgn;
+	protected TextureRegion mEnlargeShowRgn;
+	protected TextureRegion mChangeShowRgn;
+	
+	protected Sprite mPowerUpShow;
+	protected Sprite mForbidShow;
+	protected Sprite mEnlargeShow;
+	protected Sprite mChangeShow;
 	
 	public Texture mWinShowTexture;
 	public TiledTextureRegion mStarRgn;
@@ -103,6 +114,11 @@ public class GameScene extends AbstractGameScene {
 		mEnlargePropRgn = TextureRegionFactory.createFromAsset(mTexture, StartActivity.Instance, "enlarge.png", 760, 240);
 		mChangePropRgn = TextureRegionFactory.createFromAsset(mTexture, StartActivity.Instance, "change.png", 760, 280);
 		mTurnMarkRgn = TextureRegionFactory.createFromAsset(mTexture, StartActivity.Instance, "turnmark.png", 760, 320);
+		mPropShowTexture = new Texture(1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		mPowerUpShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "PowerUp-show.png", 0, 0);
+		mForbidShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Forbid-show.png", 320, 0);
+		mEnlargeShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Enlarge-show.png", 0, 480);
+		mChangeShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Change-show.png", 320, 480);
 	}
 	
 	public GameScene(int pLayerCount, Engine baseEngine) {
@@ -179,11 +195,15 @@ public class GameScene extends AbstractGameScene {
     	createProp(125, 25, mEnlargePropRgn, Brain.GROUP2, PropSprite.ENLARGE);
     	createProp(55, 25, mChangePropRgn, Brain.GROUP2, PropSprite.CHANGE);
     	
+    	mPowerUpShow = createPropShowImage(mPowerUpShowRgn);
+    	mForbidShow = createPropShowImage(mForbidShowRgn);
+    	mEnlargeShow = createPropShowImage(mEnlargeShowRgn);
+    	mChangeShow = createPropShowImage(mChangeShowRgn);
+    	
     	mBrain.init();
     	mBrain.setGameScene(this);
     	
     	MyContactListener listener = new MyContactListener(this);
-    	//����烽�锟�nge
     	int hingeInterval = 75;
     	int hingeHeightInterval = 2;
     	listener._bodyA = createHinge(StartActivity.CAMERA_WIDTH / 2 - hingeInterval, StartActivity.CAMERA_HEIGHT / 2 - hingeHeightInterval, mHingeRgn);
@@ -411,6 +431,14 @@ public class GameScene extends AbstractGameScene {
     	this.createPropHelp(sprite, rgn, group, category);
     }
     
+    protected Sprite createPropShowImage(TextureRegion rgn) {
+    	Sprite sprite = new Sprite(StartActivity.CAMERA_WIDTH / 2 - rgn.getWidth() / 2, StartActivity.CAMERA_HEIGHT / 2 - rgn.getHeight() / 2, rgn);
+    	sprite.setAlpha(0);
+    	sprite.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    	this.getChild(1).attachChild(sprite);
+    	return sprite;
+    }
+    
     protected void changePlayer() {
     	Log.d("confirm change turn", "changgepa");
     	if(mBrain.isForbidPropOn == true)
@@ -542,7 +570,6 @@ public class GameScene extends AbstractGameScene {
 							}
 						}
 					}));
-			
 		}
 		else
 		{
@@ -572,6 +599,39 @@ public class GameScene extends AbstractGameScene {
 					}));
 		}
 	}
+    
+    public void showPropImage(int propCategory) {
+    	boolean currentPlayer = mBrain.getCurrentPlayer();
+    	Sprite propShowSprite = null;	
+    	switch(propCategory) {
+    	case PropSprite.POWERUP: {
+    		propShowSprite = this.mPowerUpShow;
+    		break;
+    	}
+    	case PropSprite.FORBID: {
+    		propShowSprite = this.mForbidShow;
+    		break;
+    	}
+    	case PropSprite.ENLARGE: {
+    		propShowSprite = this.mEnlargeShow;
+    		break;
+    	}
+    	case PropSprite.CHANGE: {
+    		propShowSprite = this.mChangeShow;
+    		break;
+    	}
+    	default:
+    		break;
+    	}
+    	if(currentPlayer == Brain.PLAYER2) {
+    		propShowSprite.setRotation(180.0f);
+    	}
+    	else {
+    		propShowSprite.setRotation(0.0f);
+    	}
+    	propShowSprite.setAlpha(1.0f);
+    	propShowSprite.registerEntityModifier(new AlphaModifier(1.0f, 1, 0));
+    }
     
     protected void sendMessage(BTMessage msg) {
 	}

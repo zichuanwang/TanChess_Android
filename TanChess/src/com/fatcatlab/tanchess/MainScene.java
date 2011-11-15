@@ -89,6 +89,8 @@ public class MainScene extends AbstractGameScene implements
 		mGameScene.loadImageResource();
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mGameScene.mTexture);
+		MainScene.this.mEngine.getTextureManager().loadTextures(
+				mGameScene.mPropShowTexture);
 
 		mGameScene.mWinShowTexture = new Texture(512, 1024,
 				TextureOptions.BILINEAR_PREMULTIPLYALPHA);

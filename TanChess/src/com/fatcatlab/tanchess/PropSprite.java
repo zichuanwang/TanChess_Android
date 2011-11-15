@@ -138,6 +138,7 @@ public class PropSprite extends Sprite {
 		default:
 			break;
 		}
+		gameScene.showPropImage(this.category);
 	}
 	
 	protected void drawRectStandardProcedure(int points, float[] vertices) {

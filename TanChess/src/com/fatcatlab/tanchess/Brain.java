@@ -460,7 +460,9 @@ public class Brain {
 			break;
 		case PropSprite.CHANGE:
 			StartActivity.Instance.mSound.teleportSound.play();
+			break;
 		}
+		gameScene.showPropImage(category);
 	}
 
 	public void setChange(int id) {
