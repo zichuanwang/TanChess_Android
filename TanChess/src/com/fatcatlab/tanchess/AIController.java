@@ -119,7 +119,6 @@ public class AIController {
 		int count = 0;
 		
 		System.out.println(checkBumpHinge(allChessmans.get(new Integer(17)),allChessmans.get(new Integer(12))));
-		System.out.println(ChessmanSprite.checkAlive(160, 580));
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it
@@ -149,14 +148,14 @@ public class AIController {
 								rivalChessman));
 						doMap.put(count, hcs);
 						count++;
-						this.doAction();
-						return;
+						//this.doAction();
+						//return;
 					}
 				}
 			}
 		}
-		//this.doAction();
-		//doMap.clear();
+		this.doAction();
+		doMap.clear();
 	}
 
 	/*
@@ -208,10 +207,8 @@ public class AIController {
 		// can move , return false;
 		if (distance_in_box2d > distance || mSpeed < speed_inaccuracy)
 			return false;
-		System.out.println("speed:" + mSpeed);
 
 		float distance_can_move = this.getMoveDistance(mSpeed, toDamping) * 32;
-
 		
 		float coefficient = 1 / (distance_in_box2d * mPixelToMeterRatio) ;
 		Vector2 from2ToVec = new Vector2(to.getPosition().x
@@ -251,12 +248,12 @@ public class AIController {
 		boolean result = false;
 		float x = 0;
 		float y = 0;
-		System.out.println("canmove :" + distance);
 		x =  chessman.getPosition().x + vector.x * distance;
 		y =  chessman.getPosition().y + vector.y * distance;
+		result = ChessmanSprite.checkAlive(x, y);
+		System.out.println("canmove :" + distance);
 		System.out.println("x pos:" + x);
 		System.out.println("y pos:" + y);
-		result = ChessmanSprite.checkAlive(x, y);
 		System.out.println("result:"+result);
 		return !result;
 	}
@@ -269,10 +266,10 @@ public class AIController {
 						.getPosition().x - to.getPosition().x))
 						+ (double) ((from.getPosition().y - to.getPosition().y) * (from
 								.getPosition().y - to.getPosition().y)));
-		if ((checkInLineChessman(from, to, L_Hinge, 32, from2ToDistance) == false)
-				&& (checkInLineChessman(from, to, R_Hinge, 32, from2ToDistance) ==  false))
+		if ((checkInLineChessman(from, to, L_Hinge, 28, from2ToDistance) == false)
+				&& (checkInLineChessman(from, to, R_Hinge, 28, from2ToDistance) ==  false))
 			result = false;
-		//System.out.println("from:"+from.chessmanID +"   to:"+to.chessmanID +"   result"+result);
+		System.out.println("from:"+from.chessmanID +"   to:"+to.chessmanID +"   result"+result);
 		return result;
 	}
 
@@ -564,5 +561,14 @@ public class AIController {
 		hcs.from.mBody
 				.applyLinearImpulse(impulse, hcs.from.mBody.getPosition());
 	}
+	
+	public boolean chessmanMoveTo(ChessmanSprite chessman, Vector2 point){
+		return false;
+	}
+	
+	public void doDefence(){
+		//find the biggest chess that could move to the center of the chessboard . check if there exits other chessmans between it and the point
+	}
+	
 
 }
