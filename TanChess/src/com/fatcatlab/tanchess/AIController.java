@@ -49,7 +49,8 @@ public class AIController {
 	private final Vector2 L_Hinge = new Vector2(halfScreenWidth - 75, halfScreenHeight );
 	private final Vector2 R_Hinge = new Vector2(halfScreenWidth + 75, halfScreenHeight );
 
-	private final float speed_inaccuracy = 0.2f;
+	private final float attack_speed_inaccuracy = 1.0f;
+	private final float defence_speed_inaccuracy = 0.01f;
 
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
@@ -173,11 +174,11 @@ public class AIController {
 		float from2ToDistance = getDistance(from, to);
 		float distance_in_box2d = (from2ToDistance - fromR - toR) / mPixelToMeterRatio;
 		float distance_try = 0.0f;
-		while (speed > speed_inaccuracy && distance_in_box2d > distance_try) {
+		while (speed > attack_speed_inaccuracy && distance_in_box2d > distance_try) {
 			distance_try += speed * this.STEPDT;
 			speed *= 1.0f - fromDamping * this.STEPDT;
 		}
-		if (distance_in_box2d > distance_try || speed < speed_inaccuracy)
+		if (distance_in_box2d > distance_try || speed < attack_speed_inaccuracy)
 			return false;
 		float distance_can_move = this.getMoveDistance(speed, toDamping) * mPixelToMeterRatio;
 		float coefficient = 1 / from2ToDistance;
@@ -239,7 +240,7 @@ public class AIController {
 
 	public float getMoveDistance(float speed, float damping) {
 		float distance = 0.0f;
-		while (speed > speed_inaccuracy) {
+		while (speed > attack_speed_inaccuracy) {
 			distance += speed * this.STEPDT;
 			speed *= (1.0f - damping * this.STEPDT);
 		}
@@ -322,7 +323,7 @@ public class AIController {
 	}
 	
 	protected float getSpeed(float distance_in_box2d, float fromDamping) {
-		float speed = 0.01f;
+		float speed = defence_speed_inaccuracy;
 		float distance_try = 0;
 		while ( distance_in_box2d > distance_try) {
 			distance_try += speed * this.STEPDT;
