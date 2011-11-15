@@ -372,7 +372,7 @@ public class AIController {
 		ChessmanSprite selectedChessman = getMostBeneficialDefenceChessman();
 		Log.d("DEFENCE", "do defence:"+selectedChessman.chessmanID);
 		boolean moveToLeftMiddle = true;
-		if(selectedChessman.getPosition().x > halfScreenWidth) {
+		if(selectedChessman.getPosition().x < halfScreenWidth) {
 			moveToLeftMiddle = false;
 		}
 		Vector2 toPos = null;

@@ -21,8 +21,9 @@ public class MainScene extends AbstractGameScene implements
 		IOnMenuItemClickListener {
 
 	protected static final int MENU_PLAY = 0;
-	protected static final int MENU_HELP = MENU_PLAY + 1;
-	protected static final int MENU_CONNECT = MENU_HELP + 1;
+	protected static final int MENU_ROBOT = 1;
+	protected static final int MENU_HELP = 2;
+	protected static final int MENU_CONNECT = 3;
 	
 	public static int BLUETOOTH_STATE = -1;
 	public static final int BLUETOOTH_OFF = 0;
@@ -44,6 +45,7 @@ public class MainScene extends AbstractGameScene implements
 	private TextureRegion mBackground;
 	private TextureRegion mTitle;
 	private TiledTextureRegion mMenuItemPlay;
+	private TiledTextureRegion mMenuItemRobot;
 	private TiledTextureRegion mMenuItemHelp;
 	private TiledTextureRegion mMenuItemConnect;
 
@@ -83,6 +85,9 @@ public class MainScene extends AbstractGameScene implements
 		MainScene.this.mMenuItemConnect = TextureRegionFactory
 				.createTiledFromAsset(MainScene.this.mTexture,
 						StartActivity.Instance, "connect.png", 640, 80, 2, 1);
+		MainScene.this.mMenuItemRobot = TextureRegionFactory
+		.createTiledFromAsset(MainScene.this.mTexture,
+				StartActivity.Instance, "robot.png", 640, 120, 2, 1);
 		MainScene.this.mEngine.getTextureManager().loadTextures(mTexture);
 
 		mGameScene = new GameScene(3, mEngine);
@@ -205,6 +210,20 @@ public class MainScene extends AbstractGameScene implements
 				super.onUnselected();
 			}
 		};
+		AnimatedSpriteMenuItem robotButton = new AnimatedSpriteMenuItem(
+				MENU_ROBOT, mMenuItemRobot) {
+			@Override
+			public void onSelected() {
+				setCurrentTileIndex(1);
+				super.onSelected();
+			}
+
+			@Override
+			public void onUnselected() {
+				setCurrentTileIndex(0);
+				super.onUnselected();
+			}
+		};
 		AnimatedSpriteMenuItem helpButton = new AnimatedSpriteMenuItem(
 				MENU_HELP, mMenuItemHelp) {
 			@Override
@@ -235,16 +254,19 @@ public class MainScene extends AbstractGameScene implements
 		};
 
 		this.mMenuScene.addMenuItem(playButton);
+		this.mMenuScene.addMenuItem(robotButton);
 		this.mMenuScene.addMenuItem(helpButton);
 		this.mMenuScene.addMenuItem(connnectButton);
 		playButton.setBlendFunction(GL10.GL_SRC_ALPHA,
+				GL10.GL_ONE_MINUS_SRC_ALPHA);
+		robotButton.setBlendFunction(GL10.GL_SRC_ALPHA,
 				GL10.GL_ONE_MINUS_SRC_ALPHA);
 		helpButton.setBlendFunction(GL10.GL_SRC_ALPHA,
 				GL10.GL_ONE_MINUS_SRC_ALPHA);
 		connnectButton.setBlendFunction(GL10.GL_SRC_ALPHA,
 				GL10.GL_ONE_MINUS_SRC_ALPHA);
 		this.mMenuScene.setMenuAnimator(new PositionalMenuAnimator(160 - 85,
-				260, 20));
+				230, 15));
 		this.mMenuScene.buildAnimations();
 		this.mMenuScene.setBackgroundEnabled(false);
 		this.mMenuScene.setOnMenuItemClickListener(this);
@@ -260,13 +282,13 @@ public class MainScene extends AbstractGameScene implements
 	       	StartActivity.SCENE_STATE = StartActivity.STATE_GAMESCENT;
 			mGameScene.onLoadScene();
 			return true;
-		case MENU_HELP:
-			/* End Activity. */
-			//mHelpScene.onLoadScene();
-			//ai
-			
+		case MENU_ROBOT:
 	       	StartActivity.SCENE_STATE = StartActivity.STATE_AIGAME;
 			mGameScene.onLoadScene();
+			return true;
+		case MENU_HELP:
+	       	StartActivity.SCENE_STATE = StartActivity.STATE_HELPDOC;
+			mHelpScene.onLoadScene();
 			return true;
 		case MENU_CONNECT:
 			Intent itent=new Intent();
