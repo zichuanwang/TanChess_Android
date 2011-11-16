@@ -161,10 +161,6 @@ public class Brain {
 			sprite = mProps.get(key);
 			sprite.isForbad = true;
 		}
-		/*
-		 * for(Iterator<PropSprite> it = mProps.iterator(); it.hasNext();) {
-		 * sprite = (PropSprite)(it.next()); sprite.isForbad = true; }
-		 */
 	}
 
 	public void changePlayer() {

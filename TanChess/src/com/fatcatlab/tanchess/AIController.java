@@ -1,24 +1,65 @@
 package com.fatcatlab.tanchess;
 
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Set;
 import com.badlogic.gdx.math.Vector2;
 
 import android.util.Log;
 
 public class AIController {
 	
-	class HitChessmansStruct {
+	private final static int ATTACK_ACTION = 0;
+	private final static int DEFENCE_ACTION = 1;
+	
+	class ActionStruct {
 		public ChessmanSprite from;
-		public ChessmanSprite to;
+		public Vector2 to;
 		public int point = 0;
-
-		public HitChessmansStruct(ChessmanSprite f, ChessmanSprite t) {
+		public int actionType = ATTACK_ACTION;
+		public float defenceSpeed;
+		private float maxSpeed = 0;
+		public ActionStruct(ChessmanSprite f, Vector2 t) {
 			this.from = f;
 			this.to = t;
+			maxSpeed = 0;
+			if (this.from.getScale() == ChessmanSprite.SMALL_SIZE) {
+				maxSpeed = MAX_S_SPEED;
+			} else if (this.from.getScale() == ChessmanSprite.LARGE_SIZE) {
+				maxSpeed = MAX_L_SPEED;
+			} else if (this.from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
+				maxSpeed = MAX_M_SPEED;
+			}
+		}
+		
+		public void doAction() {
+			if(actionType == ATTACK_ACTION) {
+				doAttackAction();
+			}
+			else if(actionType == DEFENCE_ACTION) {
+				doDefenceAction();
+			}
+		}
+		
+		protected void doAttackAction() {
+			this.doMoveAction(this.from, this.to, maxSpeed);
+		}
+		
+		protected void doDefenceAction() {
+			if(maxSpeed < defenceSpeed)
+				this.doMoveAction(this.from, to, maxSpeed);
+			else 
+				this.doMoveAction(this.from, to, defenceSpeed);
+		}
+		
+		protected void doMoveAction(ChessmanSprite from, Vector2 toPos, float speed) {
+			Vector2 fromPos = from.getPosition();
+			float distance = getDistance(fromPos, toPos);
+			float coefficient = speed / distance;
+			Vector2 from2ToVec = new Vector2(toPos.x - fromPos.x, toPos.y - fromPos.y);
+			Vector2 impulse = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
+			from.mBody.applyLinearImpulse(impulse, from.mBody.getPosition());
 		}
 	}
 	
@@ -26,7 +67,7 @@ public class AIController {
 	Hashtable<Integer, ChessmanSprite> myChessmans;
 	Hashtable<Integer, ChessmanSprite> rivalChessmans;
 	Hashtable<Integer, PropSprite> props;
-	HashMap<Integer, HitChessmansStruct> doMap;
+	Vector<ActionStruct> actionArray;
 	boolean player;
 
 	private final float MAX_S_SPEED = 0.63f * 45.0f;
@@ -55,7 +96,7 @@ public class AIController {
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
 		this.rivalChessmans = new Hashtable<Integer, ChessmanSprite>();
-		this.doMap = new HashMap<Integer, AIController.HitChessmansStruct>();
+		this.actionArray = new Vector<ActionStruct>();
 		this.props = null;
 		this.player = player;
 	}
@@ -80,13 +121,9 @@ public class AIController {
 
 	public void simulate() {
 		this.calculate();
-		//ChessmanSprite chessman = allChessmans.get(new Integer(19));
-		//ChessmanSprite check = allChessmans.get(new Integer(27));
-		//this.checkMoveInLine(chessman , getMoveToVector2(chessman) , check.getPosition() , chessman.getScale()*26);
 	}
 	
-	protected void doAttack() {
-		int count = 0;
+	protected void calculateAttack() {
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer)it.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
@@ -106,12 +143,12 @@ public class AIController {
 						int myPoint = myChessman.calculateValue();
 						int rivalPoint = rivalChessman.calculateValue();
 						int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
-						HitChessmansStruct hcs = new HitChessmansStruct(myChessman, rivalChessman);
-						hcs.point = myFinalPoint - myPoint + rivalPoint;
+						ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
+						as.actionType = ATTACK_ACTION;
+						as.point = myFinalPoint - myPoint + rivalPoint;
 						Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
-								+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+hcs.point);
-						doMap.put(count, hcs);
-						count++;
+								+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
+						actionArray.add(as);
 					}
 					else {
 						Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
@@ -119,37 +156,36 @@ public class AIController {
 				}
 			}
 		}
-		this.doAttackAction();
-		doMap.clear();
 	}
 	
-	private void doAttackAction() {
-		if(doMap.isEmpty()) {
-			doDefence();
+	protected void doAction() {
+		if(actionArray.isEmpty()) {
+			Log.d("AI ERROR", "action array empty");
 			return;
 		}
-		Set<Integer> keys = doMap.keySet();
-		int key = 0;
 		int maxPoint = 0;
-		for (Iterator<Integer> iter = keys.iterator(); iter.hasNext();) {
-			Integer integer = iter.next();
-			HitChessmansStruct hcs = (HitChessmansStruct) doMap.get(integer);
-			if (hcs.point > maxPoint) {
-				key = integer.intValue();
-				maxPoint = hcs.point;
-			}
+		ActionStruct selectedAS = null;
+		for(Iterator<ActionStruct> it = actionArray.iterator(); it.hasNext();) {
+			ActionStruct as = (ActionStruct)(it.next()); 
+			if (as.point >= maxPoint) {
+				selectedAS = as;
+				maxPoint = as.point;
+			} 
 		}
-		HitChessmansStruct toDo = doMap.get(key);
-		Log.d("CAN BOUNCE OFF", "decide!----self:" + toDo.from.chessmanID + " rival:" + toDo.to.chessmanID);
-		doMoveAction(toDo);
+		//Log.d("CAN BOUNCE OFF", "decide!----self:" + selectedAS.from.chessmanID + " rival:" + toDo.to.chessmanID);
+		selectedAS.doAction();
+		actionArray.clear();
 	}
 	
-	public void calculate() {
-		doDefence();	
-		//doAttack();
+	protected void calculate() {
+		calculateDefence();	
+		calculateAttack();
+		doAction();
 	}
+	
+	
 
-	public boolean canBounceOff(ChessmanSprite from, ChessmanSprite to) {
+	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to) {
 		boolean result = false;
 		float impulse = 0;
 		float fromDamping = 0.0f;
@@ -334,29 +370,8 @@ public class AIController {
 	}
 	
 	
-	protected void doMoveAction(ChessmanSprite from, Vector2 toPos, float speed) {
-		Vector2 fromPos = from.getPosition();
-		float distance = getDistance(fromPos, toPos);
-		float coefficient = speed / distance;
-		Vector2 from2ToVec = new Vector2(toPos.x - fromPos.x, toPos.y - fromPos.y);
-		Vector2 impulse = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
-		from.mBody.applyLinearImpulse(impulse, from.mBody.getPosition());
-	}
 	
-	protected void doMoveAction(HitChessmansStruct hcs) {
-		float speed = 0;
-		if (hcs.from.getScale() == ChessmanSprite.SMALL_SIZE) {
-			speed = this.MAX_S_SPEED;
-		} else if (hcs.from.getScale() == ChessmanSprite.LARGE_SIZE) {
-			speed = this.MAX_L_SPEED;
-		} else if (hcs.from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
-			speed = this.MAX_M_SPEED;
-		}
-		Vector2 toPos = hcs.to.getPosition();
-		this.doMoveAction(hcs.from, toPos, speed);
-	}
-	
-	protected float getSpeed(float distance_in_box2d, float fromDamping) {
+	protected float calculateSpeedHelp(float distance_in_box2d, float fromDamping) {
 		float speed = defence_speed_inaccuracy;
 		float distance_try = 0;
 		while ( distance_in_box2d > distance_try) {
@@ -367,7 +382,7 @@ public class AIController {
 		return speed;
 	}
 	
-	protected void chessmanMoveTo(ChessmanSprite chessman, Vector2 toPos){
+	protected float calculateSpeed(ChessmanSprite chessman, Vector2 toPos) {
 		float from2ToDistance = getDistance(chessman.getPosition(), toPos);
 		float distance_in_box2d = from2ToDistance / mPixelToMeterRatio;
 		float fromDamping = 0.0f;
@@ -378,13 +393,13 @@ public class AIController {
 		} else if (chessman.getScale() == ChessmanSprite.MEDIUM_SIZE) {
 			fromDamping = this.M_LinearDamping;
 		}
-		float speed = this.getSpeed(distance_in_box2d, fromDamping);
-		this.doMoveAction(chessman, toPos, speed);
+		float speed = this.calculateSpeedHelp(distance_in_box2d, fromDamping);
+		return speed;
 	}
 	
-	protected ChessmanSprite getMostBeneficialDefenceChessman() {
-		ChessmanSprite result = null;
-		int maxBenefit = 0;
+	protected void calculateDefence() {
+		//find the biggest chess that could move to the center of the chessboard. 
+		// check if there exits other chessmans between it and the point.
 		Vector2 bestPos = new Vector2(this.halfScreenWidth, this.halfScreenHeight);
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
@@ -392,7 +407,7 @@ public class AIController {
 			if (current.isDead)
 				continue;
 			//check if there is some chessman between current and the point
-			Vector2 destinationVector2 = getMoveToVector2(current);
+			Vector2 destinationVector = getDefenceDirection(current);
 			boolean needCheck = true;
 			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext() && needCheck;) {
 				Integer key2 = (Integer) it2.next();
@@ -400,33 +415,22 @@ public class AIController {
 				if (check.isDead )
 					continue;
 				float from2ToDistance = current.getPosition().dst(check.getPosition());
-				if( checkChessmanInLine(current, destinationVector2, check.getPosition(), current.getScale()*26, from2ToDistance) )
+				if( checkChessmanInLine(current, destinationVector, check.getPosition(), current.getScale()*26, from2ToDistance) )
 				{
 					needCheck = false;
 				}
 			}
 			if(needCheck == false)
 				continue;
-			
-			int currentBenefit = ChessmanSprite.calculateValue(current.value, bestPos) - current.calculateValue();
-			if(currentBenefit >= maxBenefit) {
-				result = current;
-				maxBenefit = currentBenefit;
-			}
+			ActionStruct as = new ActionStruct(current, destinationVector);
+			as.defenceSpeed = this.calculateSpeed(current, destinationVector);
+			as.point = ChessmanSprite.calculateValue(current.value, bestPos) - current.calculateValue();
+			as.actionType = DEFENCE_ACTION;
+			actionArray.add(as);
 		}
-		return result;
 	}
 	
-	protected void doDefence(){
-		//find the biggest chess that could move to the center of the chessboard. 
-		// check if there exits other chessmans between it and the point.
-		ChessmanSprite selectedChessman = getMostBeneficialDefenceChessman();
-		Log.d("DEFENCE", "do defence:"+selectedChessman.chessmanID);
-		Vector2 toPos = getMoveToVector2(selectedChessman);
-		this.chessmanMoveTo(selectedChessman, toPos);
-	}
-	
-	protected Vector2 getMoveToVector2(ChessmanSprite current){
+	protected Vector2 getDefenceDirection(ChessmanSprite current) {
 		boolean moveToLeftMiddle = true;
 		if(current.getPosition().x < halfScreenWidth) {
 			moveToLeftMiddle = false;
