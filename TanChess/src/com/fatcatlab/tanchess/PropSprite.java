@@ -72,7 +72,7 @@ public class PropSprite extends Sprite {
 		case TouchEvent.ACTION_UP:
 			if(this.mSelected) {
 				this.gameScene.spendScore(this.score);
-				this.func();
+				this.func(false);
 				this.mSelected = false;
 				this.workToDoOnKeyUp(category, this.propID);
 			}
@@ -116,24 +116,28 @@ public class PropSprite extends Sprite {
 			isValid = false;
 	}
 	
-	protected void func() {
+	protected void func(boolean aiMode) {
 		this.isForbad = true;
 		switch(category) {
 		case POWERUP:
 			StartActivity.Instance.mSound.powerUpSound.play();
-			gameScene.turnOnPowerUp();
+			if(!aiMode)
+				gameScene.turnOnPowerUp();
 			break;
 		case FORBID:
 			StartActivity.Instance.mSound.teleportEffectSound.play();
-			gameScene.turnOnForbid();
+			if(!aiMode)
+				gameScene.turnOnForbid();
 			break;
 		case ENLARGE:
 			StartActivity.Instance.mSound.changeSound.play();
-			gameScene.trunOnEnlarge();
+			if(!aiMode)
+				gameScene.trunOnEnlarge();
 			break;
 		case CHANGE:
 			StartActivity.Instance.mSound.teleportSound.play();
-			gameScene.turnOnExchange();
+			if(!aiMode)
+				gameScene.turnOnExchange();
 			break;
 		default:
 			break;

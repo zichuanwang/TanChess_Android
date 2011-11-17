@@ -1,6 +1,7 @@
 package com.fatcatlab.tanchess;
 
 import java.util.Enumeration;
+import java.util.Random;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -20,6 +21,7 @@ public class AIController {
 		public int actionType = ATTACK_ACTION;
 		public float defenceSpeed;
 		public float maxSpeed = 0;
+		public boolean powerUp = false;
 		public ActionStruct(ChessmanSprite f, Vector2 t) {
 			this.from = f;
 			this.to = t;
@@ -92,6 +94,12 @@ public class AIController {
 
 	private final float attack_speed_inaccuracy = 1.0f;
 	private final float defence_speed_inaccuracy = 0.01f;
+	
+	private boolean canPowerUp = false;
+	private boolean canFobid = false;
+	private boolean canEnlarge = false;
+	private boolean canExchange = false;
+	private int mPlayerValue = 0;
 
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
@@ -101,7 +109,7 @@ public class AIController {
 		this.player = player;
 	}
 	
-	public void init(Hashtable<Integer, ChessmanSprite> chessmans, Hashtable<Integer, PropSprite> props) {
+	public void init(Hashtable<Integer, ChessmanSprite> chessmans, Hashtable<Integer, PropSprite> props ,int value) {
 		myChessmans.clear();
 		rivalChessmans.clear();
 		this.allChessmans = chessmans;
@@ -117,10 +125,33 @@ public class AIController {
 			}
 		}
 		this.props = props;
+		this.mPlayerValue = value;
 	}
 
 	public void simulate() {
+		this.fillPropState();
 		this.calculate();
+	}
+	
+	protected void fillPropState(){
+		canPowerUp = false;
+		canFobid = false;
+		canEnlarge = false;
+		canExchange = false;
+		if(mPlayerValue >= PropSprite.POWERUP_NEED_SCORE)
+			canPowerUp = true;
+		if(mPlayerValue >= PropSprite.FORBID_NEED_SCORE)
+			canFobid = true;
+		if(mPlayerValue >= PropSprite.ENLARGE_NEED_SCORE)
+			canEnlarge = true;
+		if(mPlayerValue >= PropSprite.CHANGE_NEED_SCORE)
+			canExchange = true;
+		
+		Log.d("PROP", "power:"+canPowerUp);
+		Log.d("PROP", "forbid:"+canFobid);
+		Log.d("PROP", "canenlarge:"+canEnlarge);
+		Log.d("PROP", "canexchange:"+canExchange);
+		
 	}
 	
 	protected void calculateAttack() {
@@ -134,28 +165,53 @@ public class AIController {
 				ChessmanSprite rivalChessman = rivalChessmans.get(key2);
 				if (rivalChessman.isDead)
 					continue;
-				boolean canBounceOff = canBounceOff(myChessman, rivalChessman);
-				if (canBounceOff) {
+				boolean canBounceOffWithoutPower = canBounceOff(myChessman, rivalChessman, false);
+				if (canBounceOffWithoutPower) {
 					//Log.d("CAN BOUNCE OFF", "can bounce off");
 					boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
 					boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
 					if (!hitHinge && !hitOtherChessman) {
-						int myPoint = myChessman.calculateValue();
-						int rivalPoint = rivalChessman.calculateValue();
-						int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
-						ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
-						as.actionType = ATTACK_ACTION;
-						as.point = myFinalPoint - myPoint + rivalPoint;
-						//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
-						//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
-						actionArray.add(as);
+						this.createActionStruct(myChessman, rivalChessman);
 					}
 					else {
 						//Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
 					}
+				}else if(this.canPowerUp){
+					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
+					if(canBounceOffWithPower){
+						/*
+						if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
+						{
+							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+							as.powerUp = true;
+						}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.random(20)){
+							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+							as.powerUp = true;
+						}
+						*/
+						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
+						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
+						if (!hitHinge && !hitOtherChessman) {
+							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+							as.powerUp = true;
+						}
+					}
 				}
 			}
 		}
+	}
+	
+	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
+		int myPoint = myChessman.calculateValue();
+		int rivalPoint = rivalChessman.calculateValue();
+		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
+		ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
+		as.actionType = ATTACK_ACTION;
+		as.point = myFinalPoint - myPoint + rivalPoint;
+		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
+		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
+		actionArray.add(as);
+		return as;
 	}
 	
 	protected void doAction() {
@@ -174,19 +230,31 @@ public class AIController {
 			} 
 		}
 		//Log.d("CAN BOUNCE OFF", "decide!----self:" + selectedAS.from.chessmanID + " rival:" + toDo.to.chessmanID);
+		if(selectedAS.powerUp == true)
+		{
+			Enumeration<Integer> en = props.keys();
+			while(en.hasMoreElements()){
+				Integer key = (Integer)en.nextElement();
+				PropSprite prop = props.get(key);
+				if( prop.category ==  PropSprite.POWERUP ){
+					prop.gameScene.spendScore(PropSprite.POWERUP_NEED_SCORE);
+					prop.func(true);
+				}
+			}
+		}
 		selectedAS.doAction();
 		actionArray.clear();
 	}
 	
 	protected void calculate() {
-		calculateDefence();	
+		//calculateDefence();	
 		calculateAttack();
 		doAction();
 	}
 	
 	
 
-	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to) {
+	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
 		boolean result = false;
 		float impulse = 0;
 		float fromDamping = 0.0f;
@@ -209,6 +277,8 @@ public class AIController {
 			toDamping = this.M_LinearDamping;
 		}
 		float speed = impulse / this.mass;
+		if(powerUp)
+			speed*=1.4f;
 		float fromR = from.getScale() * 26;
 		float toR = to.getScale() * 26;
 		float from2ToDistance = getDistance(from, to);
@@ -461,4 +531,18 @@ public class AIController {
 	protected Vector2 getDefenceDirection(ChessmanSprite current) {
 		return getDefenceDirectionHelp(current, true);
 	}
+	
+	/*
+	 * Input the percentage, return true || false
+	 */
+	public boolean random(float percentage){
+		float randomNumber = (float) Math.random();
+		float Boundary = percentage / 100.0f;
+		if(randomNumber < Boundary)
+			return true;
+		else
+			return false;
+	}
+	
+	
 }
