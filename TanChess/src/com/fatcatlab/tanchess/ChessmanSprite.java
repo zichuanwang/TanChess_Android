@@ -298,6 +298,9 @@ public class ChessmanSprite extends Sprite {
 		return result;
 	}
 	
+	/*
+	 * If large = 12 if normal = 4 if small = 0
+	 */
 	private static int getRealValue(int value) {
 		int realValue = value;
 		if(value == ChessmanSprite.SMALL_CHESSMAN_VALUE) {

@@ -97,6 +97,7 @@ public class AIController {
 
 	private final float attack_speed_inaccuracy = 1.0f;
 	private final float defence_speed_inaccuracy = 0.01f;
+	private final float attack_distance_inaccuracy = 4.0f;
 	
 	private boolean canPowerUp = false;
 	private boolean canFobid = false;
@@ -135,6 +136,12 @@ public class AIController {
 		this.fillPropState();
 		this.calculate();
 	}
+
+	protected void calculate() {
+		calculateDefence();	
+		calculateAttack();
+		doAction();
+	}
 	
 	protected void fillPropState(){
 		canPowerUp = false;
@@ -149,12 +156,6 @@ public class AIController {
 			canEnlarge = true;
 		if(mPlayerValue >= PropSprite.CHANGE_NEED_SCORE)
 			canExchange = true;
-		
-		Log.d("PROP", "power:"+canPowerUp);
-		Log.d("PROP", "forbid:"+canFobid);
-		Log.d("PROP", "canenlarge:"+canEnlarge);
-		Log.d("PROP", "canexchange:"+canExchange);
-		
 	}
 	
 	protected void calculateAttack() {
@@ -172,23 +173,31 @@ public class AIController {
 				if (canBounceOffWithoutPower) {
 					//Log.d("CAN BOUNCE OFF", "can bounce off");
 					boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
-					boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
-					if (!hitHinge && !hitOtherChessman) {
-						this.createActionStruct(myChessman, rivalChessman);
-					}
-					else {
-						//Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
+					if( !hitHinge ){
+						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
+						if (!hitOtherChessman) {
+							this.createActionStruct(myChessman, rivalChessman);
+						}
+						else{
+							//Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
+						}
 					}
 				}else if(this.canPowerUp){
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
 					if(canBounceOffWithPower){
-						if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
-						{
-							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-							as.usePowerUp = true;
-						}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.random(20)){
-							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-							as.usePowerUp = true;
+						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
+						if (!hitHinge){
+							boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
+							if (!hitHinge && !hitOtherChessman) {
+								if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
+								{
+									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+									as.usePowerUp = true;
+								}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.random(20)){
+									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+									as.usePowerUp = true;
+								}
+							}
 						}
 					}
 				}
@@ -206,6 +215,25 @@ public class AIController {
 		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
 		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
 		actionArray.add(as);
+		Log.d("ATTACK POINT:", ""+as.point );
+		return as;
+	}
+	
+	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman , ChessmanSprite _rivalChessman){
+		int myPoint = myChessman.calculateValue();
+		int rivalPoint1 = rivalChessman.calculateValue();
+		int rivalPoint2 = _rivalChessman.calculateValue();
+		int rivalPoint = (int) ((rivalPoint1+rivalPoint2) * 0.75f);
+		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
+		Vector2 attackPos = new Vector2((rivalChessman.getPosition().x + _rivalChessman.getPosition().x)/2, 
+				(rivalChessman.getPosition().y + _rivalChessman.getPosition().y)/2);
+		ActionStruct as = new ActionStruct(myChessman, attackPos );
+		as.actionType = ATTACK_ACTION;
+		as.point = myFinalPoint - myPoint + rivalPoint;
+		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
+		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
+		actionArray.add(as);
+		Log.d("ATTACK POINT:", ""+as.point );
 		return as;
 	}
 	
@@ -218,7 +246,7 @@ public class AIController {
 		ActionStruct selectedAS = null;
 		for(Iterator<ActionStruct> it = actionArray.iterator(); it.hasNext();) {
 			ActionStruct as = (ActionStruct)(it.next()); 
-			Log.d("CAN BOUNCE OFF", "type:"+as.actionType+" point"+as.point+" from:"+as.from.chessmanID);
+			//Log.d("CAN BOUNCE OFF", "type:"+as.actionType+" point"+as.point+" from:"+as.from.chessmanID);
 			if (as.point >= maxPoint) {
 				selectedAS = as;
 				maxPoint = as.point;
@@ -240,13 +268,6 @@ public class AIController {
 		selectedAS.doAction();
 		actionArray.clear();
 	}
-	
-	protected void calculate() {
-		//calculateDefence();	
-		calculateAttack();
-		doAction();
-	}
-	
 	
 
 	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
@@ -367,6 +388,12 @@ public class AIController {
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
 				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
+					//TODO 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去
+					if( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26  )
+						if ( isNearBorder(to) )
+						{
+							this.createActionStruct(from, to ,current );
+						}
 					return true;
 				}
 			}
@@ -481,15 +508,12 @@ public class AIController {
 				{
 					needCheck = true;
 					break;
-					/*destinationVector = this.getAlternativeDefenceDirection(myChessman);
-					if(checkChessmanInLine(myChessman, destinationVector, check.getPosition(), checkR, from2ToDistance)) {
-						needCheck = true;
-					}*/
 				}
 			}
 			ActionStruct as = new ActionStruct(myChessman, destinationVector);
 			as.defenceSpeed = this.calculateSpeed(myChessman, destinationVector);
 			as.point = ChessmanSprite.calculateValue(myChessman.value, bestPos) - myChessman.calculateValue();
+			as.point *= 0.15f;
 			as.actionType = DEFENCE_ACTION;
 			if(as.defenceSpeed > as.maxSpeed)
 				as.point -= 1000;
@@ -497,6 +521,7 @@ public class AIController {
 				as.point -= 10000;
 			if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)
 				as.point -= 5000;
+			Log.d("DEFENCE POINT:", ""+as.point );
 			actionArray.add(as);
 		}
 	}
@@ -549,5 +574,16 @@ public class AIController {
 			return to.getScale()*26;
 	}
 	
+	protected boolean isNearBorder(ChessmanSprite chessman){
+		final int Redundancy = 10 ; 
+		float x = chessman.getPosition().x;
+		float y = chessman.getPosition().y;
+		if( ChessmanSprite.checkAlive( x , y ) ){
+			if (!ChessmanSprite.checkAlive(x-Redundancy, y -Redundancy) || !ChessmanSprite.checkAlive(x+Redundancy, y+Redundancy)){
+				return true;
+			}
+		}
+		return false;
+	}
 	
 }
