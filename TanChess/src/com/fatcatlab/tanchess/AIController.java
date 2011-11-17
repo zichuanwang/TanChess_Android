@@ -21,7 +21,7 @@ public class AIController {
 		public int actionType = ATTACK_ACTION;
 		public float defenceSpeed;
 		public float maxSpeed = 0;
-		public boolean powerUp = false;
+		public boolean usePowerUp = false;
 		public ActionStruct(ChessmanSprite f, Vector2 t) {
 			this.from = f;
 			this.to = t;
@@ -45,7 +45,7 @@ public class AIController {
 		}
 		
 		protected void doAttackAction() {
-			if(powerUp == true)
+			if(usePowerUp == true)
 				this.doMoveAction(this.from, this.to, maxSpeed * 1.4f);
 			else
 				this.doMoveAction(this.from, this.to, maxSpeed);
@@ -182,21 +182,13 @@ public class AIController {
 				}else if(this.canPowerUp){
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
 					if(canBounceOffWithPower){
-						/*
 						if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
 						{
 							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-							as.powerUp = true;
+							as.usePowerUp = true;
 						}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.random(20)){
 							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-							as.powerUp = true;
-						}
-						*/
-						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
-						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
-						if (!hitHinge && !hitOtherChessman) {
-							ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-							as.powerUp = true;
+							as.usePowerUp = true;
 						}
 					}
 				}
@@ -233,7 +225,7 @@ public class AIController {
 			} 
 		}
 		//Log.d("CAN BOUNCE OFF", "decide!----self:" + selectedAS.from.chessmanID + " rival:" + toDo.to.chessmanID);
-		if(selectedAS.powerUp == true)
+		if(selectedAS.usePowerUp == true)
 		{
 			Enumeration<Integer> en = props.keys();
 			while(en.hasMoreElements()){
@@ -341,8 +333,11 @@ public class AIController {
 	protected boolean checkBumpHinge(ChessmanSprite from, ChessmanSprite to) {
 		boolean result = true;
 		float from2ToDistance = getDistance(from, to);
-		if ((checkChessmanInLine(from, to, L_Hinge, hingeR, from2ToDistance) == false)
-				&& (checkChessmanInLine(from, to, R_Hinge, hingeR, from2ToDistance) == false))
+		float L_checkR = this.calculateNeededR(from, to, L_Hinge);
+		float R_checkR = this.calculateNeededR(from, to, R_Hinge);
+		
+		if ((checkChessmanInLine(from, to, L_Hinge, hingeR, L_checkR, from2ToDistance) == false)
+				&& (checkChessmanInLine(from, to, R_Hinge, hingeR , R_checkR , from2ToDistance) == false))
 			result = false;
 		return result;
 	}
@@ -369,8 +364,9 @@ public class AIController {
 				continue;
 			if (current != from && current != to) {
 				Vector2 currentPosition = current.getPosition();
+				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
-				if(this.checkChessmanInLine(from, to, currentPosition, currentR, from2ToDistance)) {
+				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
 					return true;
 				}
 			}
@@ -379,13 +375,13 @@ public class AIController {
 	}
 
 	protected boolean checkChessmanInLine(ChessmanSprite from, ChessmanSprite to,
-			Vector2 currentPosition, float currentR, float from2ToDistance) {
-		return this.checkChessmanInLine(from, to.getPosition(), currentPosition, currentR, from2ToDistance);
+			Vector2 currentPosition, float currentR , float checkR , float from2ToDistance) {
+		return this.checkChessmanInLine(from, to.getPosition(), currentPosition, currentR, checkR , from2ToDistance);
 	}
 	
 	protected boolean checkChessmanBetweenLine(ChessmanSprite from, Vector2 toVector,
 			Vector2 currentPosition, float currentR, float from2ToDistance) {
-		boolean result = this.checkChessmanInLine(from, toVector, currentPosition, currentR, from2ToDistance);
+		boolean result = this.checkChessmanInLine(from, toVector, currentPosition, currentR , from.getScale()*26, from2ToDistance);
 		if(result) {
 			float includeAngle = this.getIncludeAngle(from.getPosition(), toVector, currentPosition);
 			if(includeAngle < 0)
@@ -407,7 +403,7 @@ public class AIController {
 	}
 	
 	protected boolean checkChessmanInLine(ChessmanSprite from, Vector2 toVector,
-			Vector2 currentPosition, float currentR, float from2ToDistance) {
+			Vector2 currentPosition, float currentR , float checkR, float from2ToDistance) {
 		float point2LineDistance;
 		if (toVector.x - from.getPosition().x != 0) {
 			float k = (toVector.y - from.getPosition().y)
@@ -418,8 +414,7 @@ public class AIController {
 		} else {
 			point2LineDistance = getPointLineDistance(currentPosition, 1, 0, -1 * from.getPosition().x);
 		}
-		float fromR = 26 * from.getScale();
-		if (fromR < point2LineDistance - currentR) {
+		if (checkR < point2LineDistance - currentR) {
 			return false;
 		}
 		// 检查是否在from和to连线后方
@@ -545,6 +540,13 @@ public class AIController {
 			return true;
 		else
 			return false;
+	}
+	
+	protected float calculateNeededR(ChessmanSprite from, ChessmanSprite to, Vector2 currentPos){
+		if( this.getIncludeAngle(from.getPosition(), to.getPosition(), currentPos ) < 0 )
+			return from.getScale()*26;
+		else
+			return to.getScale()*26;
 	}
 	
 	
