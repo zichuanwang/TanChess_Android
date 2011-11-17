@@ -45,7 +45,10 @@ public class AIController {
 		}
 		
 		protected void doAttackAction() {
-			this.doMoveAction(this.from, this.to, maxSpeed);
+			if(powerUp == true)
+				this.doMoveAction(this.from, this.to, maxSpeed * 1.4f);
+			else
+				this.doMoveAction(this.from, this.to, maxSpeed);
 		}
 		
 		protected void doDefenceAction() {
