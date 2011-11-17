@@ -441,12 +441,11 @@ public class GameScene extends AbstractGameScene {
     
     protected void changePlayer() {
     	Log.d("confirm change turn", "changgepa");
+    	this.mBrain.changePlayer();
     	if(mBrain.isForbidPropOn == true)
     	{
     		this.shutDownForbid();
-    		return;
     	}
-    	this.mBrain.changePlayer();
     }
     
     public void spendScore(int score) {

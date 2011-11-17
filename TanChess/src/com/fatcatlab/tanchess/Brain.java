@@ -13,8 +13,9 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class Brain {
 	public static final boolean PLAYER1 = false;
 	public static final boolean PLAYER2 = true;
-	int mPlayer1Life, mPlayer2Life;
-	private int mPlayer1Score = 0, mPlayer2Score = 0;
+	protected int mPlayer1Life, mPlayer2Life;
+	protected int mPlayer1Score = 0, mPlayer2Score = 0;
+
 	// all the chesses
 	private Hashtable<Integer, ChessmanSprite> mChessmans = new Hashtable<Integer, ChessmanSprite>();
 	// all the property sprites
@@ -165,50 +166,55 @@ public class Brain {
 
 	public void changePlayer() {
 
-		this.destroyChessmanBody();
-		Enumeration<Integer> en = mChessmans.keys();
-		while (en.hasMoreElements()) {
-			Integer key = (Integer) en.nextElement();
-			ChessmanSprite chessman = mChessmans.get(key);
-			if (mCurrentPlayer == PLAYER1) {
-				if (chessman.getGroup() == GROUP1)
-					chessman.isForbad = true;
-				else if(this.is_AI == false)
-					chessman.isForbad = false;
-			} else {
-				if (chessman.getGroup() == GROUP1)
-					chessman.isForbad = false;
-				else 
-					chessman.isForbad = true;
+		if (!this.isForbidPropOn) {
+			this.destroyChessmanBody();
+			Enumeration<Integer> en = mChessmans.keys();
+			while (en.hasMoreElements()) {
+				Integer key = (Integer) en.nextElement();
+				ChessmanSprite chessman = mChessmans.get(key);
+				if (mCurrentPlayer == PLAYER1) {
+					if (chessman.getGroup() == GROUP1)
+						chessman.isForbad = true;
+					else if (this.is_AI == false)
+						chessman.isForbad = false;
+				} else {
+					if (chessman.getGroup() == GROUP1)
+						chessman.isForbad = false;
+					else
+						chessman.isForbad = true;
+				}
+			}
+			PropSprite sprite;
+			Enumeration<Integer> props = mProps.keys();
+			while (props.hasMoreElements()) {
+				Integer key = (Integer) props.nextElement();
+				sprite = mProps.get(key);
+				if (mCurrentPlayer == PLAYER1) {
+					if (sprite.group == GROUP1)
+						sprite.isForbad = true;
+					else if (this.is_AI == false)
+						sprite.isForbad = false;
+				} else {
+					if (sprite.group == GROUP1)
+						sprite.isForbad = false;
+					else
+						sprite.isForbad = true;
+				}
 			}
 		}
-		PropSprite sprite;
-		Enumeration<Integer> props = mProps.keys();
-		while (props.hasMoreElements()) {
-			Integer key = (Integer) props.nextElement();
-			sprite = mProps.get(key);
-			if (mCurrentPlayer == PLAYER1) {
-				if (sprite.group == GROUP1)
-					sprite.isForbad = true;
-				else if(this.is_AI == false)
-					sprite.isForbad = false;
-			} else {
-				if (sprite.group == GROUP1)
-					sprite.isForbad = false;
-				else
-					sprite.isForbad = true;
-			}
-		}
-
-		// exchange the player
-		mCurrentPlayer = !mCurrentPlayer;
 		// test for get Position
-		if(this.is_AI) {
-			if (this.mCurrentPlayer == aiController.player) {
-				aiController.init(this.mChessmans, this.mProps , (aiController.player == Brain.PLAYER1)?mPlayer1Score:mPlayer2Score);
+		if (this.is_AI) {
+			if (this.mCurrentPlayer != aiController.player) {
+				System.out.println("DO AI");
+				aiController.init(this.mChessmans, this.mProps,
+						(aiController.player == Brain.PLAYER1) ? mPlayer1Score
+								: mPlayer2Score);
 				aiController.simulate();
 			}
 		}
+		// exchange the player
+		if (!this.isForbidPropOn)
+			mCurrentPlayer = !mCurrentPlayer;
 	}
 
 	public void checkPropValid() {
@@ -443,7 +449,7 @@ public class Brain {
 	public void setPropClick(int id, int category) {
 		PropSprite propSprite = mProps.get(id);
 		this.gameScene.spendScore(propSprite.score);
-		switch(propSprite.category) {
+		switch (propSprite.category) {
 		case PropSprite.POWERUP:
 			StartActivity.Instance.mSound.powerUpSound.play();
 			break;
@@ -480,75 +486,91 @@ public class Brain {
 		while (en.hasMoreElements()) {
 			Integer key = (Integer) en.nextElement();
 			ChessmanSprite sprite = mChessmans.get(key);
-			ChessmanCollisionStruct ccs = new ChessmanCollisionStruct(sprite.getPosition().x, sprite.getPosition().y, sprite.chessmanID);
+			ChessmanCollisionStruct ccs = new ChessmanCollisionStruct(
+					sprite.getPosition().x, sprite.getPosition().y,
+					sprite.chessmanID);
 			array.addItemWithCCS(ccs, i);
 			i++;
 		}
 		return array;
 	}
-	
+
 	public void reconcileChessmanCollisionArray(ChessmanCollisionArray array) {
-		for(int i = 0; i < 32; i++) {
+		for (int i = 0; i < 32; i++) {
 			ChessmanCollisionStruct ccs = array.getCSSAtIndex(i);
 			ChessmanSprite sprite = this.mChessmans.get(ccs.ID);
-			Log.d("BT","ID:"+new Integer(ccs.ID).toString());
-			boolean selfDied = ChessmanSprite.checkAlive(sprite.getPosition().x, sprite.getPosition().y);
-			boolean rivalDied = ChessmanSprite.checkAlive(ccs.Position_x, ccs.Position_y);
-			if(selfDied && !rivalDied) {
+			Log.d("BT", "ID:" + new Integer(ccs.ID).toString());
+			boolean selfDied = ChessmanSprite.checkAlive(
+					sprite.getPosition().x, sprite.getPosition().y);
+			boolean rivalDied = ChessmanSprite.checkAlive(ccs.Position_x,
+					ccs.Position_y);
+			if (selfDied && !rivalDied) {
 				sprite.isDead = false;
 				sprite.body.setActive(true);
 				sprite.fadeIn();
-				if(this.mCurrentPlayer == Brain.PLAYER1) {
-					if(sprite.getGroup() == Brain.PLAYER1) {
+				if (this.mCurrentPlayer == Brain.PLAYER1) {
+					if (sprite.getGroup() == Brain.PLAYER1) {
 						this.mPlayer1Life++;
 						this.mPlayer1Score -= sprite.value;
-					}
-					else {
+					} else {
 						this.mPlayer2Life++;
 						this.mPlayer1Score -= sprite.value / 2;
 						this.mPlayer2Score -= sprite.value;
 					}
-				}
-				else {
-					if(sprite.getGroup() == Brain.PLAYER1) {
+				} else {
+					if (sprite.getGroup() == Brain.PLAYER1) {
 						this.mPlayer1Life++;
 						this.mPlayer1Score -= sprite.value / 2;
 						this.mPlayer2Score -= sprite.value;
-					}
-					else {
+					} else {
 						this.mPlayer2Life++;
 						this.mPlayer2Score -= sprite.value;
 					}
 				}
-			}
-			else if(!selfDied && rivalDied) {
+			} else if (!selfDied && rivalDied) {
 				sprite.isDead = true;
 				sprite.body.setActive(false);
 				sprite.fadeOut();
-				if(this.mCurrentPlayer == Brain.PLAYER1) {
-					if(sprite.getGroup() == Brain.PLAYER1) {
+				if (this.mCurrentPlayer == Brain.PLAYER1) {
+					if (sprite.getGroup() == Brain.PLAYER1) {
 						this.mPlayer1Life--;
 						this.mPlayer1Score += sprite.value;
-					}
-					else {
+					} else {
 						this.mPlayer2Life--;
 						this.mPlayer1Score += sprite.value / 2;
 						this.mPlayer2Score += sprite.value;
 					}
-				}
-				else {
-					if(sprite.getGroup() == Brain.PLAYER1) {
+				} else {
+					if (sprite.getGroup() == Brain.PLAYER1) {
 						this.mPlayer1Life--;
 						this.mPlayer1Score += sprite.value / 2;
 						this.mPlayer2Score += sprite.value;
-					}
-					else {
+					} else {
 						this.mPlayer2Life--;
 						this.mPlayer2Score += sprite.value;
 					}
 				}
 			}
-			sprite.body.setTransform(new Vector2(ccs.Position_x / 32, ccs.Position_y / 32), sprite.body.getAngle());
+			sprite.body.setTransform(new Vector2(ccs.Position_x / 32,
+					ccs.Position_y / 32), sprite.body.getAngle());
 		}
 	}
+	
+	public int getmPlayer1Score() {
+		return mPlayer1Score;
+	}
+
+	public void setmPlayer1Score(int mPlayer1Score) {
+		this.mPlayer1Score = mPlayer1Score;
+	}
+
+	public int getmPlayer2Score() {
+		return mPlayer2Score;
+	}
+
+	public void setmPlayer2Score(int mPlayer2Score) {
+		this.mPlayer2Score = mPlayer2Score;
+	}
+
+	
 }

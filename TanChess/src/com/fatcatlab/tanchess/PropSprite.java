@@ -125,8 +125,7 @@ public class PropSprite extends Sprite {
 			break;
 		case FORBID:
 			StartActivity.Instance.mSound.teleportEffectSound.play();
-			if(!aiMode)
-				gameScene.turnOnForbid();
+			gameScene.turnOnForbid();
 			break;
 		case ENLARGE:
 			StartActivity.Instance.mSound.changeSound.play();
