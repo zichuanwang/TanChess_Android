@@ -32,8 +32,8 @@ public class ChessmanSprite extends Sprite {
 	public static final float MEDIUM_SIZE = 0.47f;
 	public static final float LARGE_SIZE = 0.67f;
 	
-	private static final int HIGH_SAFETY_ZONE_WIDTH = 100, HIGH_SAFETY_ZONE_HEIGHT = 80;
-	private static final int NORMAL_SAFETY_ZONE_WIDTH = 180, NORMAL_SAFETY_ZONE_HEIGHT = 270;
+	public static final int HIGH_SAFETY_ZONE_WIDTH = 100, HIGH_SAFETY_ZONE_HEIGHT = 80;
+	public static final int NORMAL_SAFETY_ZONE_WIDTH = 180, NORMAL_SAFETY_ZONE_HEIGHT = 270;
 	private static final int HIGH_SAFETY_COEFFICIENT = 50;
 	private static final int NORMAL_SAFETY_COEFFICIENT = 30;
 	private static final int LOW_SAFETY_COEFFICIENT = 10;
@@ -90,7 +90,6 @@ public class ChessmanSprite extends Sprite {
 		this.attachChild(mRivalcolor);
 
 		mEngine = pEngine;
-		// TODO Auto-generated constructor stub
 		mImage = new Sprite(pTextureRegion.getWidth() / 2 - image.getWidth()
 				/ 2, pTextureRegion.getHeight() / 2 - image.getHeight() / 2,
 				image);
@@ -270,7 +269,7 @@ public class ChessmanSprite extends Sprite {
 		return ChessmanSprite.checkInZone(zoneWidth, zoneHeight, this.getPosition());
 	}
 	
-	private static boolean checkInZone(int zoneWidth, int zoneHeight, Vector2 pos) {
+	public static boolean checkInZone(int zoneWidth, int zoneHeight, Vector2 pos) {
 		int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
 		int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
 		if (pos.x < halfScreenWidth - zoneWidth / 2
@@ -425,7 +424,7 @@ public class ChessmanSprite extends Sprite {
 		} else {
 			this.setGroup(Brain.GROUP1);
 		}
-		this.gameScene.getmBrain().exchangePlayerLife();
+		this.gameScene.getmBrain().changePlayerLifeWhenExchange();
 		this.isForbad = false;
 		Log.d("group1life",new Integer(this.gameScene.getmBrain().getPlayerLife(false)).toString());
 		Log.d("group2life",new Integer(this.gameScene.getmBrain().getPlayerLife(true)).toString());

@@ -384,7 +384,7 @@ public class Brain {
 		}
 	}
 
-	public void exchangePlayerLife() {
+	public void changePlayerLifeWhenExchange() {
 		if (this.getCurrentPlayer() == PLAYER1) {
 			this.mPlayer1Life++;
 			this.mPlayer2Life--;

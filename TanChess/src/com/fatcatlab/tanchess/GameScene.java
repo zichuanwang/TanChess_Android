@@ -427,7 +427,7 @@ public class GameScene extends AbstractGameScene {
     	sprite.setGameScene(this);
     }
     protected void createProp(float posX, float posY, TextureRegion rgn, boolean group, int category) {
-    	PropSprite sprite = new PropSprite(posX - rgn.getWidth() / 2, posY - rgn.getHeight() / 2, rgn, mEngine);
+    	PropSprite sprite = new PropSprite(posX - rgn.getWidth() / 2, posY - rgn.getHeight() / 2, rgn, mEngine );
     	this.createPropHelp(sprite, rgn, group, category);
     }
     

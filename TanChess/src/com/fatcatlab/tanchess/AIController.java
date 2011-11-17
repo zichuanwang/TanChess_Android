@@ -47,7 +47,7 @@ public class AIController {
 			if(usePowerUp == true)
 				this.doMoveAction(this.from, this.to, maxSpeed * 1.4f);
 			else
-				this.doMoveAction(this.from, this.to, maxSpeed);
+				this.doMoveAction(this.from, this.to, maxSpeed * 1.0f);
 		}
 		
 		protected void doDefenceAction() {
@@ -70,7 +70,7 @@ public class AIController {
 	Hashtable<Integer, ChessmanSprite> allChessmans;
 	Hashtable<Integer, ChessmanSprite> myChessmans;
 	Hashtable<Integer, ChessmanSprite> rivalChessmans;
-	Hashtable<Integer, PropSprite> props;
+	Hashtable<Integer, PropSprite> myProps;
 	Vector<ActionStruct> actionArray;
 	boolean player;
 
@@ -99,7 +99,7 @@ public class AIController {
 	private final float attack_distance_inaccuracy = 4.0f;
 	
 	private boolean canPowerUp = false;
-	private boolean canFobid = false;
+	private boolean canForbid = false;
 	private boolean canEnlarge = false;
 	private boolean canExchange = false;
 	private int mPlayerValue = 0;
@@ -108,7 +108,7 @@ public class AIController {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
 		this.rivalChessmans = new Hashtable<Integer, ChessmanSprite>();
 		this.actionArray = new Vector<ActionStruct>();
-		this.props = null;
+		this.myProps = new Hashtable<Integer, PropSprite>();
 		this.player = player;
 	}
 	
@@ -127,7 +127,13 @@ public class AIController {
 					rivalChessmans.put(key, chessman);
 			}
 		}
-		this.props = props;
+		en = props.keys();
+		while(en.hasMoreElements()){
+			Integer key = (Integer) en.nextElement();
+			PropSprite prop = props.get(key);
+			if (prop.group == this.player)
+				this.myProps.put(key, prop);
+		}
 		this.mPlayerValue = value;
 	}
 
@@ -137,20 +143,86 @@ public class AIController {
 	}
 
 	protected void calculate() {
+		useProp();
 		calculateDefence();	
 		calculateAttack();
 		doAction();
 	}
 	
+	protected void useProp(){
+		//TODO forbid 概率为0
+		if(canForbid == true && this.random(0))
+		{
+			mPlayerValue -= PropSprite.FORBID_NEED_SCORE;
+			doForbid();
+		}
+		else if(canEnlarge == true && this.random(10))
+		{
+			mPlayerValue -= PropSprite.ENLARGE_NEED_SCORE;
+			doEnlarge();
+		}
+		else if(canExchange == true && this.random(10))
+		{
+			mPlayerValue -= PropSprite.CHANGE_NEED_SCORE;
+			doExchange();
+		}
+		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
+			canPowerUp = false;
+	}
+	
+	protected void doForbid(){
+		//TODO
+	}
+	
+	protected void doEnlarge(){
+		//TODO
+	}
+	
+	protected void doExchange(){
+		//TODO
+		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = (Integer)iter.next();
+			ChessmanSprite chessman = rivalChessmans.get(key);
+			if( chessman.getScale() == ChessmanSprite.LARGE_SIZE )
+			{
+				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
+						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition() )) 
+				{
+					this.propAnimation(PropSprite.CHANGE);
+					chessman.exchange();
+					break;
+				}else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
+						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && this.random(50))
+				{
+					this.propAnimation(PropSprite.CHANGE);
+					chessman.exchange();
+					break;
+				}else if(rivalChessmans.size() <= 3 && this.random(50)){
+					this.propAnimation(PropSprite.CHANGE);
+					chessman.exchange();
+					break;
+				}
+			}else if( chessman.getScale() == ChessmanSprite.MEDIUM_SIZE ){
+				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
+						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && this.random(20) ) 
+				{
+					this.propAnimation(PropSprite.CHANGE);
+					chessman.exchange();
+					break;
+				}
+			}
+		}
+	}
+	
 	protected void fillPropState(){
 		canPowerUp = false;
-		canFobid = false;
+		canForbid = false;
 		canEnlarge = false;
 		canExchange = false;
 		if(mPlayerValue >= PropSprite.POWERUP_NEED_SCORE)
 			canPowerUp = true;
 		if(mPlayerValue >= PropSprite.FORBID_NEED_SCORE)
-			canFobid = true;
+			canForbid = true;
 		if(mPlayerValue >= PropSprite.ENLARGE_NEED_SCORE)
 			canEnlarge = true;
 		if(mPlayerValue >= PropSprite.CHANGE_NEED_SCORE)
@@ -254,18 +326,22 @@ public class AIController {
 		//Log.d("CAN BOUNCE OFF", "decide!----self:" + selectedAS.from.chessmanID + " rival:" + toDo.to.chessmanID);
 		if(selectedAS.usePowerUp == true)
 		{
-			Enumeration<Integer> en = props.keys();
-			while(en.hasMoreElements()){
-				Integer key = (Integer)en.nextElement();
-				PropSprite prop = props.get(key);
-				if( prop.category ==  PropSprite.POWERUP ){
-					prop.gameScene.spendScore(PropSprite.POWERUP_NEED_SCORE);
-					prop.func(true);
-				}
-			}
+			propAnimation(PropSprite.POWERUP);
 		}
 		selectedAS.doAction();
 		actionArray.clear();
+	}
+	
+	protected void propAnimation(int type){
+		Enumeration<Integer> en = myProps.keys();
+		while(en.hasMoreElements()){
+			Integer key = (Integer)en.nextElement();
+			PropSprite prop = myProps.get(key);
+			if( prop.category ==  type ){
+				prop.gameScene.spendScore(prop.score);
+				prop.func(true);
+			}
+		}
 	}
 	
 
@@ -532,7 +608,7 @@ public class AIController {
 			as.point *= 0.16f;
 			as.actionType = DEFENCE_ACTION;
 			if(as.defenceSpeed > as.maxSpeed)
-				as.point -= 1000;
+				as.point = 1;
 			if(needCheck) 
 				as.point -= 10000;
 			if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)

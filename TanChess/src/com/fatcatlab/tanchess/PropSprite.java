@@ -36,11 +36,10 @@ public class PropSprite extends Sprite {
 	protected double mCurrentPer = 1;
 	protected PointF currentPos = new PointF(20,20);
     
-	public PropSprite(float pX, float pY, TextureRegion pTextureRegion, Engine pEngine) {
+	public PropSprite(float pX, float pY, TextureRegion pTextureRegion, Engine pEngine ) {
 		super(pX, pY, pTextureRegion);
 		this.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		mEngine = pEngine;
-		
 		float points[] = {0, 0, 0, 40, 40, 40, 40, 0};
 		mCDBackRect = new CDRect(0, 0, 4, points);
 		mCDBackRect.setAlpha(0.3f);
