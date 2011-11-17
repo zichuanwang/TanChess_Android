@@ -304,7 +304,7 @@ public class ChessmanSprite extends Sprite {
 	private static int getRealValue(int value) {
 		int realValue = value;
 		if(value == ChessmanSprite.SMALL_CHESSMAN_VALUE) {
-			realValue = 0;
+			realValue = 1;
 		}
 		else if(value == ChessmanSprite.LARGE_CHESSMAN_VALUE) {
 			realValue *= 3;

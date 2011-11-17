@@ -1,7 +1,6 @@
 package com.fatcatlab.tanchess;
 
 import java.util.Enumeration;
-import java.util.Random;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -182,7 +181,8 @@ public class AIController {
 							//Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
 						}
 					}
-				}else if(this.canPowerUp){
+				}else if(this.canPowerUp && rivalChessman.getScale() != ChessmanSprite.SMALL_SIZE){
+					//TODO powerup的算法：
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
 					if(canBounceOffWithPower){
 						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
@@ -223,10 +223,9 @@ public class AIController {
 		int myPoint = myChessman.calculateValue();
 		int rivalPoint1 = rivalChessman.calculateValue();
 		int rivalPoint2 = _rivalChessman.calculateValue();
-		int rivalPoint = (int) ((rivalPoint1+rivalPoint2) * 0.75f);
+		int rivalPoint = (int) ((rivalPoint1+rivalPoint2) * 0.6f);
 		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
-		Vector2 attackPos = new Vector2((rivalChessman.getPosition().x + _rivalChessman.getPosition().x)/2, 
-				(rivalChessman.getPosition().y + _rivalChessman.getPosition().y)/2);
+		Vector2 attackPos = getMidpoint(rivalChessman.getPosition(), _rivalChessman.getPosition());
 		ActionStruct as = new ActionStruct(myChessman, attackPos );
 		as.actionType = ATTACK_ACTION;
 		as.point = myFinalPoint - myPoint + rivalPoint;
@@ -388,11 +387,28 @@ public class AIController {
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
 				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
-					//TODO 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去
+					//调整。如果to和current距离比较近并且都在边沿。可以考虑打出去
 					if( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26  )
 						if ( isNearBorder(to) )
 						{
-							this.createActionStruct(from, to ,current );
+							boolean shouldCreateActionStruct = true;
+							//TODO 遍历其他的棋子。判断是否在之间，是否有挡着
+							for( Iterator<Integer> iter = allChessmans.keySet().iterator() ; iter.hasNext(); ){
+								Integer key2 = (Integer) iter.next();
+								ChessmanSprite check = allChessmans.get(key2);
+								if( !check.isDead || check ==from || check == to || check == current)
+									continue;
+								Vector2 toPoint = getMidpoint(to.getPosition(), current.getPosition());
+								float distance = getDistance(from.getPosition(), toPoint);
+								if( checkChessmanBetweenLine(from, toPoint , check.getPosition() , currentR, distance))
+								{
+									shouldCreateActionStruct = false;
+									break;
+								}
+							}
+							if(shouldCreateActionStruct)
+								//create the structure
+								this.createActionStruct( from, to ,current );
 						}
 					return true;
 				}
@@ -513,7 +529,7 @@ public class AIController {
 			ActionStruct as = new ActionStruct(myChessman, destinationVector);
 			as.defenceSpeed = this.calculateSpeed(myChessman, destinationVector);
 			as.point = ChessmanSprite.calculateValue(myChessman.value, bestPos) - myChessman.calculateValue();
-			as.point *= 0.15f;
+			as.point *= 0.16f;
 			as.actionType = DEFENCE_ACTION;
 			if(as.defenceSpeed > as.maxSpeed)
 				as.point -= 1000;
@@ -584,6 +600,10 @@ public class AIController {
 			}
 		}
 		return false;
+	}
+	
+	public Vector2 getMidpoint(Vector2 vec1, Vector2 vec2){
+		return new Vector2((vec1.x+vec2.x)/2, (vec1.y+vec2.y)/2);
 	}
 	
 }
