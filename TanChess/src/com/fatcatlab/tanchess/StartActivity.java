@@ -21,7 +21,7 @@ public class StartActivity extends BaseGameActivity {
 	public static final int CAMERA_HEIGHT = 480;
 
 	public static final int STATE_MAINSCENE = 0;
-	public static final int STATE_GAMESCENT = 1;
+	public static final int STATE_GAMESCENE = 1;
 	public static final int STATE_HELPDOC = 2;
 	public static final int STATE_CONNECT = 3;
 	public static final int STATE_BTGAMESCENE = 4;
@@ -115,40 +115,35 @@ public class StartActivity extends BaseGameActivity {
 													// KeyEvent.ACTION_UP) {
 			switch (StartActivity.SCENE_STATE) {
 			case STATE_MAINSCENE:
-				//this.finish();
 				System.exit(0);
 				break;
 			case STATE_HELPDOC:
 				this.reloadMainScene();
-				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 				break;
-			case STATE_GAMESCENT:
+			case STATE_GAMESCENE:
 				this.reloadMainScene();
-				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 				break;
 			case STATE_CONNECT:
 				this.reloadMainScene();
-				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 				break;
 			case STATE_BTGAMESCENE:
 				this.reloadMainScene();
-				StartActivity.SCENE_STATE = STATE_MAINSCENE;
 				break;
 			case STATE_AIGAME:
 				this.reloadMainScene();
-				StartActivity.SCENE_STATE = STATE_MAINSCENE;
+				break;
 			}
+			StartActivity.SCENE_STATE = STATE_MAINSCENE;
 			return true;
 		}
-		if (pKeyCode == KeyEvent.KEYCODE_MENU
-				&& StartActivity.SCENE_STATE == STATE_GAMESCENT) {
-			System.out.println("menu");
+		if (pKeyCode == KeyEvent.KEYCODE_MENU) {
+			if(StartActivity.SCENE_STATE == STATE_GAMESCENE || 
+					StartActivity.SCENE_STATE == STATE_AIGAME)
 			if (isPopupMenu == false)
 				StartActivity.Instance.mMainScene.mGameScene.popupMenu();
-		}
-		if (pKeyCode == KeyEvent.KEYCODE_MENU
-				&& StartActivity.SCENE_STATE == STATE_BTGAMESCENE) {
-			//BluetoothService.getService().stop();
+			else {
+				StartActivity.Instance.mMainScene.mGameScene.shutDownPopupMenu();
+			}
 		}
 
 		return super.onKeyDown(pKeyCode, pEvent);

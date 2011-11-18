@@ -279,7 +279,7 @@ public class MainScene extends AbstractGameScene implements
 		StartActivity.Instance.mSound.clickSound.play();
 		switch (pMenuItem.getID()) {
 		case MENU_PLAY:
-	       	StartActivity.SCENE_STATE = StartActivity.STATE_GAMESCENT;
+	       	StartActivity.SCENE_STATE = StartActivity.STATE_GAMESCENE;
 			mGameScene.onLoadScene();
 			return true;
 		case MENU_ROBOT:
