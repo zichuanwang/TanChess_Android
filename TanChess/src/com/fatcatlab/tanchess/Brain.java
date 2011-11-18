@@ -5,6 +5,8 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
 
+import org.anddev.andengine.input.touch.TouchEvent;
+
 import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
@@ -571,6 +573,80 @@ public class Brain {
 	public void setmPlayer2Score(int mPlayer2Score) {
 		this.mPlayer2Score = mPlayer2Score;
 	}
+	
+	float getLargestPermittedLength(ChessmanSprite current, float max_length) {
+	    float radius = 26;
+		float distance, R, r;
+		r = current.getScale() * radius;
+		Enumeration<Integer> en = mChessmans.keys();
+		while (en.hasMoreElements()) {
+			Integer key = (Integer) en.nextElement();
+			ChessmanSprite chessman = mChessmans.get(key);
+			if(chessman.isForbad && !chessman.isChange)
+				continue;
+			if (!chessman.isForbad && chessman.isChange)
+				continue;
+			if(chessman == current)
+				continue;
+			R = chessman.getScale() * radius;
+			distance = current.getPosition().dst(chessman.getPosition());
+			if(distance < max_length + 2 * R) {
+				max_length = ( r + ( distance - r - R ) / 2 ) < max_length ? (r + ( distance - r - R ) / 2 ) : max_length;
+			}
+		}
+		return max_length;
+	}
+	
+	float getMaxLength(ChessmanSprite chessman, float radius) {
+		// ´¥µãÀ©´ó2±¶
+	    return this.getLargestPermittedLength(chessman, radius * chessman.getScale() * 2);
+	}
 
+	boolean containsTouchLocation(ChessmanSprite chessman, TouchEvent pSceneTouchEvent)
+	{
+		float touchX = pSceneTouchEvent.getX();
+		float touchY = pSceneTouchEvent.getY();
+		float distance = chessman.getPosition().dst(touchX, touchY);
+	    int radius = 26;
+		float result = this.getMaxLength(chessman, radius);
+		if( distance > result - 0.1 )
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	private ChessmanSprite currentSelectedChessman = null;
+	
+	public void onSceneTouchEvent(final TouchEvent pSceneTouchEvent) {
+		Enumeration<Integer> en = mChessmans.keys();
+		while (en.hasMoreElements()) {
+			Integer key = (Integer) en.nextElement();
+			ChessmanSprite chessman = mChessmans.get(key);
+			if (chessman.isForbad && !chessman.isChange)
+				continue;
+			if (!chessman.isForbad && chessman.isChange)
+				continue;
+			if(pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+				if(this.containsTouchLocation(chessman, pSceneTouchEvent)) {
+					if(chessman.onTouch(pSceneTouchEvent)) {
+						currentSelectedChessman = chessman;
+					}
+					break;
+				}
+			}
+			else if(pSceneTouchEvent.getAction() == TouchEvent.ACTION_MOVE) {
+				if(currentSelectedChessman != null) {
+					currentSelectedChessman.onTouch(pSceneTouchEvent);
+				}
+			}
+			else if(pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP) {
+				if(currentSelectedChessman != null) {
+					currentSelectedChessman.onTouch(pSceneTouchEvent);
+				}
+				currentSelectedChessman = null;
+			}
+		}
+	}
 	
 }

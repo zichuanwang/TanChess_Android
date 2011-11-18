@@ -57,15 +57,16 @@ public class PropSprite extends Sprite {
 		switch(pSceneTouchEvent.getAction()) {
 		case TouchEvent.ACTION_DOWN:
 			if(!isValid)
-				break;
+				return false;
 			if(isForbad)
-				break;
+				return false;
 			if(category == ENLARGE && gameScene.getmBrain().checkLastBiggestChess())
-				break;
+				return false;
 			mSelected = true;
 			break;
 		case TouchEvent.ACTION_MOVE:
-			if(this.mSelected) {
+			if(!this.mSelected) {
+				return false;
 			}
 			break;
 		case TouchEvent.ACTION_UP:
@@ -74,6 +75,9 @@ public class PropSprite extends Sprite {
 				this.func(false);
 				this.mSelected = false;
 				this.workToDoOnKeyUp(category, this.propID);
+			}
+			else {
+				return false;
 			}
 			break;
 		}

@@ -108,34 +108,27 @@ public class ChessmanSprite extends Sprite {
 		mGunsight.setVisible(false);
 	}
 
-	@Override
-	public boolean onAreaTouched(final TouchEvent pSceneTouchEvent,
-			final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+	public boolean onTouch(final TouchEvent pSceneTouchEvent) {
 		switch (pSceneTouchEvent.getAction()) {
 		case TouchEvent.ACTION_DOWN:
 			if (isDead)
-				break;
-			if (isForbad && !isChange) {
-				break;
-			}
-			if (!isForbad && isChange)
-				break;
+				return false;
 			if (!gameScene.turnValid)
-				break;
+				return false;
 			if (isChange) {
 				this.workToDoOnChange(this.chessmanID);
 				this.exchange();
 				gameScene.shutDownExchange();
-				break;
+				return false;
 			}
 			if (isEnlarge) {
 				// add codes to change the property of the sprite
 				this.workToDoOnEnlarge(this.chessmanID);
 				this.changeSize();
-				break;
+				return false;
 			}
 			if (isPropShowing)
-				break;
+				return false;
 			
 			this.setAlpha(0.6f);
 			mImage.setBlendFunction(GL10.GL_SRC_ALPHA,
@@ -237,6 +230,13 @@ public class ChessmanSprite extends Sprite {
 		}
 		return true;
 	}
+	
+	/*@Override
+	public boolean onAreaTouched(final TouchEvent pSceneTouchEvent,
+			final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+		
+		return true;
+	}*/
 
 	public float distanceBetweenTwoPoints(Vector2 fromPoint, Vector2 toPoint) {
 		float x = toPoint.x - fromPoint.x;

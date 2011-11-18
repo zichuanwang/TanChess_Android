@@ -16,6 +16,7 @@ import org.anddev.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.anddev.andengine.extension.physics.box2d.PhysicsConnector;
 import org.anddev.andengine.extension.physics.box2d.PhysicsFactory;
 import org.anddev.andengine.extension.physics.box2d.PhysicsWorld;
+import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
@@ -135,6 +136,16 @@ public class GameScene extends AbstractGameScene {
     	
     }
     
+	@Override
+	public boolean onSceneTouchEvent(final TouchEvent pSceneTouchEvent) {
+		boolean result = super.onSceneTouchEvent(pSceneTouchEvent);
+		if(!result)
+			mBrain.onSceneTouchEvent(pSceneTouchEvent);
+		else
+			Log.d("TOUCH", "Touch Prop");
+		return result;
+	}
+	
     @Override
     protected void onLoadScene() {
     	
