@@ -155,24 +155,29 @@ public class AIController {
 	}
 	
 	protected void useProp(){
-		//TODO forbid 概率为0
 		if(canForbid == true && this.usedProp == PropSprite.FORBID)
 		{
-			mPlayerValue -= PropSprite.FORBID_NEED_SCORE;
-			if( ForbidProcess())
+			if( ForbidProcess() )
+			{
 				this.usedProp = createUseProp();
+				mPlayerValue -= PropSprite.FORBID_NEED_SCORE;
+			}
 		}
 		else if(canEnlarge == true && this.usedProp == PropSprite.ENLARGE)
 		{
-			mPlayerValue -= PropSprite.ENLARGE_NEED_SCORE;
 			if (EnlargeProcess())
+			{
 				this.usedProp = createUseProp();
+				mPlayerValue -= PropSprite.ENLARGE_NEED_SCORE;
+			}
 		}
 		else if(canExchange == true && this.usedProp == PropSprite.CHANGE)
 		{
-			mPlayerValue -= PropSprite.CHANGE_NEED_SCORE;
 			if (ExchangeProcess())
+			{
+				mPlayerValue -= PropSprite.CHANGE_NEED_SCORE;
 				this.usedProp = createUseProp();
+			}
 		}
 		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
 			canPowerUp = false;
@@ -180,12 +185,31 @@ public class AIController {
 	
 	protected boolean ForbidProcess(){
 		//TODO
+		ChessmanSprite rivalChessman = getLargestRivalChessman();
+		if(rivalChessman == null)
+			return false;
+		if(rivalChessman.getScale() != ChessmanSprite.LARGE_SIZE)
+			return false;
+		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = (Integer)iter.next();
+			ChessmanSprite myChessman = myChessmans.get(key);
+			if ( checkBumpHinge(myChessman, rivalChessman) )
+				continue;
+			if ( !checkInLine(myChessman, rivalChessman, false)){
+				//如果打不出，并且加力也打不出，去判断是否两次打能够打出
+				if ( !canBounceOff(myChessman, rivalChessman, false) && !canBounceOff(myChessman, rivalChessman, true) ){
+					
+				}
+			} else {
+				//TODO 斜线能不能打掉。
+			}
+			
+		}
 		workToDoOnForbid();
-		return true;
+		return false;
 	}
 	
 	protected boolean EnlargeProcess(){
-		//TODO
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
@@ -216,7 +240,6 @@ public class AIController {
 	}
 	
 	protected boolean ExchangeProcess(){
-		//TODO
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
@@ -295,7 +318,7 @@ public class AIController {
 					//Log.d("CAN BOUNCE OFF", "can bounce off");
 					boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
 					if( !hitHinge ){
-						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
+						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman ,true);
 						if (!hitOtherChessman) {
 							this.createActionStruct(myChessman, rivalChessman);
 						}
@@ -309,7 +332,7 @@ public class AIController {
 					if(canBounceOffWithPower){
 						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
 						if (!hitHinge){
-							boolean hitOtherChessman = checkInLine(myChessman, rivalChessman);
+							boolean hitOtherChessman = checkInLine(myChessman, rivalChessman, true);
 							if (!hitHinge && !hitOtherChessman) {
 								if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
 								{
@@ -506,7 +529,10 @@ public class AIController {
 		return distance;
 	}
 
-	protected boolean checkInLine(ChessmanSprite from, ChessmanSprite to) {
+	/*
+	 * shouldConcernAboutRedundancy为true的时候去计算靠近边沿可以打的情况。不然不考虑
+	 */
+	protected boolean checkInLine(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy) {
 		float from2ToDistance = this.getDistance(from, to);
 		for (Iterator<Integer> it = allChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
@@ -517,7 +543,7 @@ public class AIController {
 				Vector2 currentPosition = current.getPosition();
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
-				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
+				if( shouldConcernAboutRedundancy && this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
 					//调整。如果to和current距离比较近并且都在边沿。可以考虑打出去
 					if( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26  )
 						if ( isNearBorder(to , PowerUpBorderRedundancy) )
@@ -748,7 +774,7 @@ public class AIController {
 	/*
 	 * 获取当前对方的最大的棋子的大小
 	 */
-	public float getLargestRivalSize(){
+	protected float getLargestRivalSize(){
 		float largest = 0;
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = iter.next();
@@ -756,6 +782,23 @@ public class AIController {
 				largest = rivalChessmans.get(key).getScale();
 		}
 		return largest;
+	}
+	
+	/*
+	 * 获取当前对方最大的棋子
+	 */
+	protected ChessmanSprite getLargestRivalChessman(){
+		float largest = 0;
+		ChessmanSprite _largest = null;
+		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = iter.next();
+			if(rivalChessmans.get(key).getScale() > largest)
+			{
+				largest = rivalChessmans.get(key).getScale();
+				_largest = rivalChessmans.get(key);
+			}
+		}
+		return _largest;
 	}
 	
 	/*
