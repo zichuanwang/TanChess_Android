@@ -421,9 +421,17 @@ public class AIController {
 			}
 		}
 	}
-	
 
 	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
+		return canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), null , null);
+	}
+	
+	
+	/*
+	 * 检验两次是否能够打掉 
+	 */
+	protected boolean canBounceOffTwoTimes(ChessmanSprite from, ChessmanSprite to)
+	{
 		boolean result = false;
 		float impulse = 0;
 		float fromDamping = 0.0f;
@@ -446,8 +454,6 @@ public class AIController {
 			toDamping = this.M_LinearDamping;
 		}
 		float speed = impulse / this.mass;
-		if(powerUp)
-			speed*=1.4f;
 		float fromR = from.getScale() * 26;
 		float toR = to.getScale() * 26;
 		float from2ToDistance = getDistance(from, to);
@@ -457,16 +463,68 @@ public class AIController {
 			distance_try += speed * this.STEPDT;
 			speed *= 1.0f - fromDamping * this.STEPDT;
 		}
-		if (distance_in_box2d > distance_try || speed < attack_speed_inaccuracy)
+		if (distance_in_box2d >= distance_try || speed <= attack_speed_inaccuracy)
+		{
+			float distance_can_move = this.getMoveDistance(speed, toDamping) * mPixelToMeterRatio;
+			float coefficient = 1 / from2ToDistance;
+			Vector2 from2ToVec = new Vector2(to.getPosition().x - from.getPosition().x, 
+					to.getPosition().y - from.getPosition().y);
+			Vector2 impulseVec = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
+			result = this.checkOut(to.getPosition(), distance_can_move, impulseVec);
+		}
+		return result;
+		
+	}
+	
+	protected boolean canBounceOff(Vector2 fromPos, Vector2 toPos, float fromSize , float toSize ,Vector2 fromFinalPos, Vector2 toFinalPos){
+		boolean result = false;
+		float impulse = 0;
+		float fromDamping = 0.0f;
+		float toDamping = 0.0f;
+		if (fromSize == ChessmanSprite.SMALL_SIZE) {
+			impulse = this.MAX_S_SPEED;
+			fromDamping = this.S_LinearDamping;
+		} else if (fromSize == ChessmanSprite.LARGE_SIZE) {
+			impulse = this.MAX_L_SPEED;
+			fromDamping = this.L_LinearDamping;
+		} else if (fromSize == ChessmanSprite.MEDIUM_SIZE) {
+			impulse = this.MAX_M_SPEED;
+			fromDamping = this.M_LinearDamping;
+		}
+		if (toSize == ChessmanSprite.SMALL_SIZE) {
+			toDamping = this.S_LinearDamping;
+		} else if (toSize == ChessmanSprite.LARGE_SIZE) {
+			toDamping = this.L_LinearDamping;
+		} else if (toSize == ChessmanSprite.MEDIUM_SIZE) {
+			toDamping = this.M_LinearDamping;
+		}
+		float speed = impulse / this.mass;
+		float fromR = fromSize * 26;
+		float toR = toSize * 26;
+		float from2ToDistance = getDistance(fromPos, toPos);
+		float distance_in_box2d = (from2ToDistance - fromR - toR) / mPixelToMeterRatio;
+		float distance_try = 0.0f;
+		while (speed > attack_speed_inaccuracy && distance_in_box2d > distance_try) {
+			distance_try += speed * this.STEPDT;
+			speed *= 1.0f - fromDamping * this.STEPDT;
+		}
+		if (distance_in_box2d >= distance_try || speed <= attack_speed_inaccuracy)
 			return false;
 		float distance_can_move = this.getMoveDistance(speed, toDamping) * mPixelToMeterRatio;
 		float coefficient = 1 / from2ToDistance;
-		Vector2 from2ToVec = new Vector2(to.getPosition().x - from.getPosition().x, 
-				to.getPosition().y - from.getPosition().y);
+		Vector2 from2ToVec = new Vector2(toPos.x - fromPos.x, 
+				toPos.y - fromPos.y);
 		Vector2 impulseVec = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
-		result = this.checkOut(to, distance_can_move, impulseVec);
+		if(fromFinalPos != null && toFinalPos != null){
+			toFinalPos = getToChessmanFinalPos(toPos, distance_can_move, impulseVec);
+			fromFinalPos = getFromChessmanFinalPos( toPos, toR+fromR ,new Vector2(-impulseVec.x, -impulseVec.y));
+			result = this.checkOut(toFinalPos);
+		}else{
+			result = this.checkOut(toPos, distance_can_move, impulseVec);
+		}
 		return result;
 	}
+	
 
 	protected float getDistance(ChessmanSprite c1, ChessmanSprite c2) {
 		return (float) Math.sqrt((c2.getPosition().x - c1.getPosition().x)
@@ -494,14 +552,31 @@ public class AIController {
 		return result;
 	}
 
-	protected boolean checkOut(ChessmanSprite chessman, float distance, Vector2 vector) {
+	protected boolean checkOut(Vector2 position, float distance, Vector2 vector) {
 		boolean result = false;
+		Vector2 finalPos = getMoveFinalPos(position, distance, vector);
+		result = !ChessmanSprite.checkAlive(finalPos.x, finalPos.y);
+		return result;
+	}
+	
+	protected boolean checkOut(Vector2 position){
+		return !ChessmanSprite.checkAlive(position.x, position.y);
+	}
+	
+	protected Vector2 getToChessmanFinalPos(Vector2 position, float distance ,Vector2 direction){
+		return getMoveFinalPos(position, distance, direction);
+	}
+	
+	protected Vector2 getFromChessmanFinalPos(Vector2 toPos, float _r , Vector2 direction ){
+		return getMoveFinalPos(toPos, _r, direction);
+	}
+	
+	protected Vector2 getMoveFinalPos(Vector2 position, float distance ,Vector2 direction){
 		float x = 0;
 		float y = 0;
-		x =  chessman.getPosition().x + vector.x * distance;
-		y =  chessman.getPosition().y + vector.y * distance;
-		result = !ChessmanSprite.checkAlive(x, y);
-		return result;
+		x =  position.x + direction.x * distance;
+		y =  position.y + direction.y * distance;
+		return new Vector2(x,y);
 	}
 
 	protected boolean checkBumpHinge(ChessmanSprite from, ChessmanSprite to) {
@@ -815,5 +890,6 @@ public class AIController {
 			return PropSprite.ENLARGE;
 			*/
 	}
+
 	
 }
