@@ -314,8 +314,8 @@ public class AIController {
 	}
 	
 	protected void workToDoOnForbid(){
+		// 已经在propAnimation中实现了changePlayers
 		this.propAnimation(PropSprite.FORBID);
-		owner.isForbidPropOn = true;
 	}
 	
 	protected void fillPropState(){

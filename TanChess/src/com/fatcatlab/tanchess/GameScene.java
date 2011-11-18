@@ -446,6 +446,7 @@ public class GameScene extends AbstractGameScene {
     	{
     		this.shutDownForbid();
     	}
+    	this.mBrain.simulateAI();
     }
     
     public void spendScore(int score) {

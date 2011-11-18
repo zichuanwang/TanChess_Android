@@ -166,9 +166,8 @@ public class Brain {
 	}
 
 	public void changePlayer() {
-
+		this.destroyChessmanBody();
 		if (!this.isForbidPropOn) {
-			this.destroyChessmanBody();
 			Enumeration<Integer> en = mChessmans.keys();
 			while (en.hasMoreElements()) {
 				Integer key = (Integer) en.nextElement();
@@ -205,7 +204,9 @@ public class Brain {
 			// exchange the player
 			mCurrentPlayer = !mCurrentPlayer;
 		}
-			
+	}
+	
+	public void simulateAI() {
 		if (this.is_AI) {
 			if (this.mCurrentPlayer == aiController.player) {
 				aiController.init(this.mChessmans, this.mProps,
