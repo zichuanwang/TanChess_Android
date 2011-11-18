@@ -67,12 +67,13 @@ public class AIController {
 		}
 	}
 	
-	Hashtable<Integer, ChessmanSprite> allChessmans;
-	Hashtable<Integer, ChessmanSprite> myChessmans;
-	Hashtable<Integer, ChessmanSprite> rivalChessmans;
-	Hashtable<Integer, PropSprite> myProps;
-	Vector<ActionStruct> actionArray;
-	boolean player;
+	public Brain owner;
+	private Hashtable<Integer, ChessmanSprite> allChessmans;
+	private Hashtable<Integer, ChessmanSprite> myChessmans;
+	private Hashtable<Integer, ChessmanSprite> rivalChessmans;
+	private Hashtable<Integer, PropSprite> myProps;
+	private Vector<ActionStruct> actionArray;
+	public boolean player;
 
 	private final float MAX_S_SPEED = 0.63f * 45.0f;
 	private final float MAX_M_SPEED = 1.3f * 45.0f;

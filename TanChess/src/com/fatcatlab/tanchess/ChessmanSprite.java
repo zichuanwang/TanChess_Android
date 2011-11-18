@@ -16,7 +16,7 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 
-import android.util.Log;
+//import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -423,16 +423,12 @@ public class ChessmanSprite extends Sprite {
 		}
 		this.gameScene.getmBrain().changePlayerLifeWhenExchange();
 		this.isForbad = false;
-		Log.d("group1life",new Integer(this.gameScene.getmBrain().getPlayerLife(false)).toString());
-		Log.d("group2life",new Integer(this.gameScene.getmBrain().getPlayerLife(true)).toString());
 		if(!isBetrayed)
 			this.mRivalcolor.setVisible(true);
 		else
 			this.mRivalcolor.setVisible(false);
 		isBetrayed = !isBetrayed;
-		
-		// gameScene.createNewChessman(posX, posY, scale, image, group);
-	}
+}
 	
 	protected void workToDoOnKeyDown()
 	{
