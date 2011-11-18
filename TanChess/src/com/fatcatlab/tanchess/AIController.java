@@ -201,7 +201,7 @@ public class AIController {
 				this.usedProp = createUseProp();
 			}
 		}
-		//if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
+		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
 			canPowerUp = false;
 	}
 	
@@ -221,7 +221,6 @@ public class AIController {
 				if ( !canBounceOff(myChessman, rivalChessman, false) && !canBounceOff(myChessman, rivalChessman, true) ){
 					if ( canBounceOffTwoTimes(myChessman, rivalChessman) )
 					{
-						//TODO
 						this.isInForbidMode = true;
 						this.chessmanInForbidMode = myChessman;
 						ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
@@ -617,9 +616,11 @@ public class AIController {
 				Vector2 currentPosition = current.getPosition();
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
-				if( shouldConcernAboutRedundancy && this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
+				if( this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
 					//调整。如果to和current距离比较近并且都在边沿。可以考虑打出去
-					if( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26  )
+					if(( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26 ) 
+							&&shouldConcernAboutRedundancy )
+					{
 						if ( isNearBorder(to , PowerUpBorderRedundancy) )
 						{
 							boolean shouldCreateActionStruct = true;
@@ -641,7 +642,9 @@ public class AIController {
 								//create the structure
 								this.createActionStruct( from, to ,current );
 						}
-					return true;
+					}else{
+						return true;
+					}
 				}
 			}
 		}
@@ -879,15 +882,12 @@ public class AIController {
 	 * 初始化的时候确定使用哪个道具，在使用过之后也需要重新生成
 	 */
 	private int createUseProp(){
-		return PropSprite.FORBID;
-		/*
 		if(random(20) && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE)
 			return PropSprite.FORBID;
 		else if(random(40) && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE)
 			return PropSprite.CHANGE;
 		else
 			return PropSprite.ENLARGE;
-			*/
 	}
 
 	
