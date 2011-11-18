@@ -315,6 +315,7 @@ public class AIController {
 	
 	protected void workToDoOnForbid(){
 		this.propAnimation(PropSprite.FORBID);
+		owner.isForbidPropOn = true;
 	}
 	
 	protected void fillPropState(){

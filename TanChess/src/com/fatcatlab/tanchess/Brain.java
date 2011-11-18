@@ -206,7 +206,6 @@ public class Brain {
 			mCurrentPlayer = !mCurrentPlayer;
 		}
 			
-		
 		if (this.is_AI) {
 			if (this.mCurrentPlayer == aiController.player) {
 				aiController.init(this.mChessmans, this.mProps,

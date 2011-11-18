@@ -42,20 +42,18 @@ public class PopupMenuSprite extends Sprite {
 			if(pTouchAreaLocalY > this.THIRD_Y_BEGIN &&
 					pTouchAreaLocalY < this.THIRD_Y_END )
 				status = 2;
+			StartActivity.Instance.mSound.clickSound.play();
 			switch(status)
 			{
 			case 0:
-				StartActivity.Instance.mSound.clickSound.play();
 				StartActivity.Instance.getmMainScene().mGameScene.shutDownPopupMenu();
 				break;
 			case 1:
-				StartActivity.Instance.mSound.clickSound.play();
 				StartActivity.Instance.reloadGameScene();
 				StartActivity.Instance.getmMainScene().mGameScene.onLoadScene();
 				StartActivity.Instance.getmMainScene().mGameScene.shutDownPopupMenu();
 				break;
 			case 2:
-				StartActivity.Instance.mSound.clickSound.play();
 				StartActivity.Instance.reloadMainScene();
 				break;
 			}
