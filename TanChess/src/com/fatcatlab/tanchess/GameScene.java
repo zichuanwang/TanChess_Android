@@ -342,6 +342,7 @@ public class GameScene extends AbstractGameScene {
     	Shape shape = new Rectangle(SCREEN_WIDTH / 2 + posX - 26 * scale, SCREEN_HEIGHT / 2 + posY - 26 * scale, 52 * scale, 52 * scale);
     	if(group == Brain.GROUP2) {
     		shape.setRotation(180.0f);
+    		sprite.setRotation(180.0f);
     	}
     	Body body = PhysicsFactory.createCircleBody(this.mPhysicsWorld, shape, BodyType.DynamicBody, objectFixtureDef);
     	body.setBullet(true);

@@ -107,7 +107,27 @@ public class ChessmanSprite extends Sprite {
 		// this.attachChild(mGunsight);
 		mGunsight.setVisible(false);
 	}
-
+	
+	public void setSelected() {
+		if(!this.isBetrayed)
+			this.setAlpha(0.6f);
+		else 
+			this.mRivalcolor.setAlpha(0.6f);
+		mImage.setBlendFunction(GL10.GL_SRC_ALPHA,
+				GL10.GL_ONE_MINUS_SRC_ALPHA);
+		this.mImage.setAlpha(0.6f);
+	}
+	
+	public void setUnselected() {
+		if(!this.isBetrayed)
+			this.setAlpha(1.0f);
+		else 
+			this.mRivalcolor.setAlpha(1.0f);
+		mImage.setBlendFunction(GL10.GL_ONE,
+				GL10.GL_ONE_MINUS_SRC_ALPHA);
+		this.mImage.setAlpha(1.0f);
+	}
+	
 	public boolean onTouch(final TouchEvent pSceneTouchEvent) {
 		switch (pSceneTouchEvent.getAction()) {
 		case TouchEvent.ACTION_DOWN:
@@ -129,11 +149,7 @@ public class ChessmanSprite extends Sprite {
 			}
 			if (isPropShowing)
 				return false;
-			
-			this.setAlpha(0.6f);
-			mImage.setBlendFunction(GL10.GL_SRC_ALPHA,
-					GL10.GL_ONE_MINUS_SRC_ALPHA);
-			this.mImage.setAlpha(0.6f);
+			this.setSelected();
 			this.mSelected = true;
 			gameScene.turnValid = false;
 			gameScene.isValid = false;
@@ -187,10 +203,7 @@ public class ChessmanSprite extends Sprite {
 		case TouchEvent.ACTION_UP:
 			if (this.mSelected) {
 				this.mSelected = false;
-				this.setAlpha(1.0f);
-				mImage.setBlendFunction(GL10.GL_ONE,
-						GL10.GL_ONE_MINUS_SRC_ALPHA);
-				this.mImage.setAlpha(1.0f);
+				this.setUnselected();
 				mGunsight.setVisible(false);
 
 				float angle = mGunsight.getRotation();
@@ -424,10 +437,14 @@ public class ChessmanSprite extends Sprite {
 		}
 		this.gameScene.getmBrain().changePlayerLifeWhenExchange();
 		this.isForbad = false;
-		if(!isBetrayed)
+		if(!isBetrayed) {
 			this.mRivalcolor.setVisible(true);
-		else
+			this.setAlpha(0);
+		}
+		else {
 			this.mRivalcolor.setVisible(false);
+			this.mRivalcolor.setAlpha(0);
+		}
 		isBetrayed = !isBetrayed;
 }
 	

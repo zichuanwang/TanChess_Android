@@ -4,6 +4,10 @@ import java.util.Enumeration;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Iterator;
+
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
+
 import com.badlogic.gdx.math.Vector2;
 
 import android.util.Log;
@@ -113,6 +117,9 @@ public class AIController {
 	private boolean isInForbidMode = false;
 	private ChessmanSprite chessmanInForbidMode = null;
 	
+	private boolean isShowingPropImage = false;
+	private boolean isUsingEnlargeOrExchangeProp = false;
+	
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
 		this.rivalChessmans = new Hashtable<Integer, ChessmanSprite>();
@@ -158,7 +165,16 @@ public class AIController {
 			useProp();
 			calculateDefence();	
 			calculateAttack();
-			doAction();
+			final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
+			currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler) {
+					if(!isShowingPropImage && !isUsingEnlargeOrExchangeProp) {
+						doAction();
+						currentScene.unregisterUpdateHandler(pTimerHandler);
+					}
+				}
+			}));
 		}else{
 			ActionStruct as = new ActionStruct(this.chessmanInForbidMode, this.getLargestRivalChessman().getPosition());
 			as.actionType = ATTACK_ACTION;						
@@ -306,14 +322,52 @@ public class AIController {
 	
 	protected void workToDoOnExchange(ChessmanSprite chessman){
 		this.propAnimation(PropSprite.CHANGE);
-		chessman.exchange();
-		rivalChessmans.remove(new Integer(chessman.chessmanID));
-		myChessmans.put(new Integer(chessman.chessmanID), chessman);
+		final ChessmanSprite toExchangeChessman = chessman;
+		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
+		currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				if(!isShowingPropImage) {
+					toExchangeChessman.exchange();
+					rivalChessmans.remove(new Integer(toExchangeChessman.chessmanID));
+					myChessmans.put(new Integer(toExchangeChessman.chessmanID), toExchangeChessman);
+					currentScene.unregisterUpdateHandler(pTimerHandler);
+					
+					isUsingEnlargeOrExchangeProp = true;
+					currentScene.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {	
+						@Override
+						public void onTimePassed(final TimerHandler pTimerHandler2) {
+							isUsingEnlargeOrExchangeProp = false;
+							currentScene.unregisterUpdateHandler(pTimerHandler2);
+						}
+					}));
+				}
+			}
+		}));
 	}
 	
 	protected void workToDoOnEnlarge(ChessmanSprite chessman){
 		this.propAnimation(PropSprite.ENLARGE);
-		chessman.changeSize();
+		final ChessmanSprite toEnlargeChessman = chessman;
+		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
+		currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				if(!isShowingPropImage) {
+					toEnlargeChessman.changeSize();
+					currentScene.unregisterUpdateHandler(pTimerHandler);
+					
+					isUsingEnlargeOrExchangeProp = true;
+					currentScene.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {	
+						@Override
+						public void onTimePassed(final TimerHandler pTimerHandler2) {
+							isUsingEnlargeOrExchangeProp = false;
+							currentScene.unregisterUpdateHandler(pTimerHandler2);
+						}
+					}));
+				}
+			}
+		}));
 	}
 	
 	protected void workToDoOnForbid(){
@@ -436,8 +490,18 @@ public class AIController {
 			propAnimation(PropSprite.POWERUP);
 			usedProp = this.createUseProp();
 		}
-		selectedAS.doAction();
-		actionArray.clear();
+		selectedAS.from.setSelected();
+		final ActionStruct todoAS = selectedAS;
+		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
+		currentScene.registerUpdateHandler(new TimerHandler(0.5f, true, new ITimerCallback() {	
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				todoAS.from.setUnselected();
+				todoAS.doAction();
+				actionArray.clear();
+				currentScene.unregisterUpdateHandler(pTimerHandler);			
+			}
+		}));
 	}
 	
 	protected void propAnimation(int type){
@@ -446,15 +510,24 @@ public class AIController {
 			Integer key = (Integer)en.nextElement();
 			PropSprite prop = myProps.get(key);
 			if( prop.category ==  type ){
-				if( this.player == Brain.GROUP1 ){
-					prop.gameScene.getmBrain().setmPlayer1Score(prop.gameScene.getmBrain().getmPlayer1Score() - prop.score);
+				if( this.player == Brain.PLAYER1 ){
+					owner.setmPlayer1Score(prop.gameScene.getmBrain().getmPlayer1Score() - prop.score);
 				}else{
-					prop.gameScene.getmBrain().setmPlayer2Score(prop.gameScene.getmBrain().getmPlayer2Score() - prop.score);
+					owner.setmPlayer2Score(prop.gameScene.getmBrain().getmPlayer2Score() - prop.score);
 				}
 				prop.func(true);
 				break;
 			}
 		}
+		isShowingPropImage = true;
+		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
+		currentScene.registerUpdateHandler(new TimerHandler(2.0f, true, new ITimerCallback() {	
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				isShowingPropImage = false;
+				currentScene.unregisterUpdateHandler(pTimerHandler);
+			}
+		}));
 	}
 
 	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
