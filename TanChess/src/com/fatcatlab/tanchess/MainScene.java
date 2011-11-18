@@ -8,7 +8,6 @@ import org.anddev.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener
 import org.anddev.andengine.entity.scene.menu.item.AnimatedSpriteMenuItem;
 import org.anddev.andengine.entity.scene.menu.item.IMenuItem;
 import org.anddev.andengine.entity.sprite.Sprite;
-import org.anddev.andengine.entity.sprite.TiledSprite;
 import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
@@ -35,7 +34,6 @@ public class MainScene extends AbstractGameScene implements
 
 	public GameScene mGameScene;
 	public HelpScene mHelpScene;
-	public ConnectScene mConnectScene;
 	public BTGameScene mBtGameScene;
 	
 	
@@ -96,18 +94,6 @@ public class MainScene extends AbstractGameScene implements
 				mGameScene.mTexture);
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mGameScene.mPropShowTexture);
-
-		mGameScene.mWinShowTexture = new Texture(512, 1024,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		mGameScene.mStarRgn = TextureRegionFactory.createTiledFromAsset(
-				mGameScene.mWinShowTexture, StartActivity.Instance, "star.png",
-				0, 0, 2, 1);
-		mGameScene.mWinRgn = TextureRegionFactory.createTiledFromAsset(
-				mGameScene.mWinShowTexture, StartActivity.Instance,
-				"gameover.png", 0, 200, 2, 3);
-		mGameScene.mStarSprite = new TiledSprite(0, 0, mGameScene.mStarRgn);
-		mGameScene.mWinSprite = new TiledSprite(0, 0, mGameScene.mWinRgn);
-
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mGameScene.mWinShowTexture);
 
@@ -120,33 +106,15 @@ public class MainScene extends AbstractGameScene implements
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mHelpScene.mTexture);
 
-		mConnectScene = new ConnectScene(1, mEngine);
-		mConnectScene.mTexture = new Texture(512, 512,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		mConnectScene.mComingSoonRgn = TextureRegionFactory.createFromAsset(
-				mConnectScene.mTexture, StartActivity.Instance,
-				"comingsoon.png", 0, 0);
-		MainScene.this.mEngine.getTextureManager().loadTextures(
-				mConnectScene.mTexture);
+
 		mBtGameScene = new BTGameScene(3,mEngine);
 		mBtGameScene.loadImageResource();
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mBtGameScene.mTexture);
-
-		mBtGameScene.mWinShowTexture = new Texture(512, 1024,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		mBtGameScene.mStarRgn = TextureRegionFactory.createTiledFromAsset(
-				mBtGameScene.mWinShowTexture, StartActivity.Instance, "star.png",
-				0, 0, 2, 1);
-		mBtGameScene.mWinRgn = TextureRegionFactory.createTiledFromAsset(
-				mBtGameScene.mWinShowTexture, StartActivity.Instance,
-				"gameover.png", 0, 200, 2, 3);
-		mBtGameScene.mStarSprite = new TiledSprite(0, 0, mBtGameScene.mStarRgn);
-		mBtGameScene.mWinSprite = new TiledSprite(0, 0, mBtGameScene.mWinRgn);
-
 		MainScene.this.mEngine.getTextureManager().loadTextures(
 				mBtGameScene.mWinShowTexture);
-		
+		MainScene.this.mEngine.getTextureManager().loadTextures(
+				mBtGameScene.mPropShowTexture);
 	}
 
 	

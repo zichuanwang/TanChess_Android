@@ -131,14 +131,14 @@ public class BTGameScene extends GameScene {
 	protected BTChessmanSprite createChessman(float posX, float posY, float scale, TextureRegion image, boolean group) {
 		int SCREEN_WIDTH = StartActivity.CAMERA_WIDTH;
     	int SCREEN_HEIGHT = StartActivity.CAMERA_HEIGHT;
-    	ChessmanSprite sprite;
+    	BTChessmanSprite sprite;
     	if(group == Brain.GROUP1)
-    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+    		sprite = new BTChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
     			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanRedRgn, mChessmanGreenRgn, image, mEngine);
     	else
-    		sprite = new ChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
+    		sprite = new BTChessmanSprite(SCREEN_WIDTH / 2 + posX - this.mChessmanRedRgn.getWidth() / 2,
         			SCREEN_HEIGHT / 2 + posY - this.mChessmanRedRgn.getHeight() / 2, mChessmanGreenRgn, mChessmanRedRgn, image, mEngine);
-    	return (BTChessmanSprite) this.createChessmanHelp(sprite, posX, posY, scale, image, group);
+    	return (BTChessmanSprite)this.createChessmanHelp(sprite, posX, posY, scale, image, group);
     }
 
 	public void HandleMessage(BTMessage msg) {

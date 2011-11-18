@@ -107,7 +107,7 @@ public class AIController {
 	private boolean canEnlarge = false;
 	private boolean canExchange = false;
 	private int mPlayerValue = 0;
-	private int usedProp = 0;
+	private int usedProp = -1;
 	
 	//forbid记录动作的action
 	private boolean isInForbidMode = false;
@@ -144,7 +144,6 @@ public class AIController {
 				this.myProps.put(key, prop);
 		}
 		this.mPlayerValue = value;
-		usedProp = this.createUseProp();
 	}
 
 	public void simulate() {
@@ -179,6 +178,9 @@ public class AIController {
 	}
 	
 	protected void useProp(){
+		if(this.usedProp == -1) {
+			this.usedProp = createUseProp();
+		}
 		if(canForbid == true && this.usedProp == PropSprite.FORBID)
 		{
 			if( ForbidProcess() )
@@ -370,7 +372,7 @@ public class AIController {
 								{
 									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
 									as.usePowerUp = true;
-								}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.random(20)){
+								}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.usedProp == PropSprite.POWERUP){
 									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
 									as.usePowerUp = true;
 								}
@@ -432,6 +434,7 @@ public class AIController {
 		if(selectedAS.usePowerUp == true)
 		{
 			propAnimation(PropSprite.POWERUP);
+			usedProp = this.createUseProp();
 		}
 		selectedAS.doAction();
 		actionArray.clear();
@@ -825,10 +828,15 @@ public class AIController {
 	 * 判断棋子的位置(中间或者两边）返回需要考虑的半径
 	 */
 	protected float calculateNeededR(ChessmanSprite from, ChessmanSprite to, Vector2 currentPos){
-		if( this.getIncludeAngle(from.getPosition(), to.getPosition(), currentPos ) < 0 )
-			return from.getScale()*26;
-		else
-			return to.getScale()*26;
+		//float from2ToDistance = from.getPosition().dst(to.getPosition());
+		//float current2ToDistance = currentPos.dst(to.getPosition());
+		float includeAngle = this.getIncludeAngle(from.getPosition(), to.getPosition(), currentPos );
+		if( includeAngle < 0 ) {
+			return from.getScale() * 26;
+		}
+		else {
+			return to.getScale() * 26;
+		}
 	}
 	
 	/*
@@ -886,17 +894,15 @@ public class AIController {
 	 * 初始化的时候确定使用哪个道具，在使用过之后也需要重新生成
 	 */
 	private int createUseProp(){
-		return PropSprite.FORBID;
-		/*
-		if(random(20) && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID))
+		int randomNumber = (int)(Math.random() * 100);
+		if(randomNumber < 20 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID))
 			return PropSprite.FORBID;
-		else if(random(40) && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE))
+		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE))
 			return PropSprite.CHANGE;
-		else if(couldUseProp(PropSprite.ENLARGE))
+		else if(randomNumber < 90 && couldUseProp(PropSprite.ENLARGE))
 			return PropSprite.ENLARGE;
 		else
-			return -1;
-		*/
+			return PropSprite.POWERUP;
 	}
 	
 	/*

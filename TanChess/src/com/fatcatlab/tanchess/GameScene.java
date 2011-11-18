@@ -119,6 +119,11 @@ public class GameScene extends AbstractGameScene {
 		mForbidShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Forbid-show.png", 320, 0);
 		mEnlargeShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Enlarge-show.png", 0, 480);
 		mChangeShowRgn = TextureRegionFactory.createFromAsset(mPropShowTexture, StartActivity.Instance, "Change-show.png", 320, 480);
+		mWinShowTexture = new Texture(512, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		mStarRgn = TextureRegionFactory.createTiledFromAsset(mWinShowTexture, StartActivity.Instance, "star.png",
+				0, 0, 2, 1);
+		mWinRgn = TextureRegionFactory.createTiledFromAsset(mWinShowTexture, StartActivity.Instance,
+				"gameover.png", 0, 200, 2, 3);
 	}
 	
 	public GameScene(int pLayerCount, Engine baseEngine) {
@@ -200,6 +205,9 @@ public class GameScene extends AbstractGameScene {
     	mEnlargeShow = createPropShowImage(mEnlargeShowRgn);
     	mChangeShow = createPropShowImage(mChangeShowRgn);
     	
+    	mStarSprite = new TiledSprite(0, 0, mStarRgn);
+		mWinSprite = new TiledSprite(0, 0, mWinRgn);
+    	
     	mBrain.init();
     	mBrain.setGameScene(this);
     	
@@ -217,9 +225,10 @@ public class GameScene extends AbstractGameScene {
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				//System.out.println("tick");
-				mBrain.checkGameOver();
 				mBrain.checkDrop();
-				checkTurn();
+				if(!mBrain.checkGameOver()) {
+					checkTurn();
+				}
 				if (mBrain.isGameOver == true)
 					unregisterUpdateHandler(pTimerHandler);			
 			}

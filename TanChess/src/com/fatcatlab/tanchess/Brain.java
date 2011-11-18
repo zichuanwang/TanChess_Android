@@ -376,9 +376,9 @@ public class Brain {
 		return mCurrentPlayer;
 	}
 
-	public void checkGameOver() {
+	public boolean checkGameOver() {
 		if (this.mPlayer1Life > 0 && this.mPlayer2Life > 0)
-			return;
+			return false;
 		this.isGameOver = true;
 		if (this.mPlayer1Life <= 0 && this.mPlayer2Life <= 0)
 			gameScene.showWinSprite(true, true);
@@ -387,6 +387,7 @@ public class Brain {
 		} else {
 			gameScene.showWinSprite(GROUP1, false);
 		}
+		return true;
 	}
 
 	public void changePlayerLifeWhenExchange() {
