@@ -118,7 +118,6 @@ public class AIController {
 		this.actionArray = new Vector<ActionStruct>();
 		this.myProps = new Hashtable<Integer, PropSprite>();
 		this.player = player;
-		usedProp = this.createUseProp();
 	}
 	
 	public void init(Hashtable<Integer, ChessmanSprite> chessmans, Hashtable<Integer, PropSprite> props ,int value) {
@@ -144,6 +143,7 @@ public class AIController {
 				this.myProps.put(key, prop);
 		}
 		this.mPlayerValue = value;
+		usedProp = this.createUseProp();
 	}
 
 	public void simulate() {
@@ -882,12 +882,53 @@ public class AIController {
 	 * 初始化的时候确定使用哪个道具，在使用过之后也需要重新生成
 	 */
 	private int createUseProp(){
-		if(random(20) && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE)
+		if(random(20) && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID))
 			return PropSprite.FORBID;
-		else if(random(40) && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE)
+		else if(random(40) && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE))
 			return PropSprite.CHANGE;
-		else
+		else if(couldUseProp(PropSprite.ENLARGE))
 			return PropSprite.ENLARGE;
+		else
+			return -1;
+	}
+	
+	/*
+	 * 判断能量是否够某个功能
+	 * 输入能量的类型，输出true&false
+	 */
+	private boolean couldUseProp(int type){
+		if( type == PropSprite.FORBID)
+		{
+			return mPlayerValue+getMaxValue() >= PropSprite.FORBID_NEED_SCORE ? true:false;
+		}
+		else if( type == PropSprite.ENLARGE)
+		{
+			return mPlayerValue+getMaxValue() >= PropSprite.ENLARGE_NEED_SCORE ? true:false;
+		}
+		else if (type == PropSprite.CHANGE)
+		{
+			return mPlayerValue+getMaxValue() >= PropSprite.CHANGE_NEED_SCORE ? true:false;
+		}else
+			return false;
+		
+	}
+	
+	/*
+	 * 获取所有的棋子可能的最大得分
+	 */
+	private int getMaxValue(){
+		int result = 0;
+		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = (Integer)iter.next();
+			ChessmanSprite chessman = myChessmans.get(key);
+			result += chessman.value/2;
+		}
+		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = (Integer)iter.next();
+			ChessmanSprite chessman = rivalChessmans.get(key);
+			result += chessman.value;
+		}
+		return result;
 	}
 
 	

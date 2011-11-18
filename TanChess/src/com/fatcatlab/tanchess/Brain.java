@@ -38,6 +38,7 @@ public class Brain {
 	// ai part
 	public boolean is_AI = false;
 	public AIController aiController;
+	public boolean aiForbidPropOn;
 
 	Brain(int player1Life, int player2Life) {
 		mPlayer1Life = player1Life;
@@ -203,8 +204,9 @@ public class Brain {
 			}
 		}
 		// test for get Position
+		System.out.println(this.mCurrentPlayer == Brain.PLAYER1?"11111111111":"222222222222");
 		if (this.is_AI) {
-			if (this.mCurrentPlayer != aiController.player) {
+			if (this.mCurrentPlayer != aiController.player && !this.aiForbidPropOn) {
 				aiController.init(this.mChessmans, this.mProps,
 						(aiController.player == Brain.PLAYER1) ? mPlayer1Score
 								: mPlayer2Score);
@@ -313,10 +315,12 @@ public class Brain {
 
 	public void turnOnForbid() {
 		this.isForbidPropOn = true;
+		this.aiForbidPropOn = true;
 	}
 
 	public void shutDownForbid() {
 		this.isForbidPropOn = false;
+		this.aiForbidPropOn = false;
 		PropSprite sprite;
 		Enumeration<Integer> props = mProps.keys();
 		while (props.hasMoreElements()) {
