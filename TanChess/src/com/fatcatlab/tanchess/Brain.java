@@ -205,7 +205,6 @@ public class Brain {
 		// test for get Position
 		if (this.is_AI) {
 			if (this.mCurrentPlayer != aiController.player) {
-				System.out.println("DO AI");
 				aiController.init(this.mChessmans, this.mProps,
 						(aiController.player == Brain.PLAYER1) ? mPlayer1Score
 								: mPlayer2Score);

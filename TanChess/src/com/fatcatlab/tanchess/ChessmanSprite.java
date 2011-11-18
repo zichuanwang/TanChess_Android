@@ -116,7 +116,6 @@ public class ChessmanSprite extends Sprite {
 			if (isDead)
 				break;
 			if (isForbad && !isChange) {
-				System.out.println("isForbad");
 				break;
 			}
 			if (!isForbad && isChange)
@@ -214,7 +213,6 @@ public class ChessmanSprite extends Sprite {
 					gameScene.shutDownPowerUp();
 				}
 
-				//System.out.println("speed:"+mSpeed);
 				
 				Vector2 impulse = new Vector2(mSpeed
 						* (float) Math.sin(angle / 180 * Math.PI), mSpeed
@@ -246,7 +244,6 @@ public class ChessmanSprite extends Sprite {
 	}
 
 	public Vector2 getPosition() {
-		// System.out.println(this.getWidth());
 		return new Vector2(this.getX() + this.getWidth() / 2, this.getY()
 				+ this.getHeight() / 2);
 	}

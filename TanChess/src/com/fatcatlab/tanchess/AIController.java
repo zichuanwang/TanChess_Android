@@ -107,7 +107,11 @@ public class AIController {
 	private boolean canExchange = false;
 	private int mPlayerValue = 0;
 	private int usedProp = 0;
-
+	
+	//forbid记录动作的action
+	private boolean isInForbidMode = false;
+	private ChessmanSprite chessmanInForbidMode = null;
+	
 	public AIController(boolean player) {
 		this.myChessmans = new Hashtable<Integer, ChessmanSprite>();
 		this.rivalChessmans = new Hashtable<Integer, ChessmanSprite>();
@@ -148,10 +152,28 @@ public class AIController {
 	}
 
 	protected void calculate() {
-		useProp();
-		calculateDefence();	
-		calculateAttack();
-		doAction();
+		if(shouldCalculate())
+		{
+			useProp();
+			calculateDefence();	
+			calculateAttack();
+			doAction();
+		}else{
+			ActionStruct as = new ActionStruct(this.chessmanInForbidMode, this.getLargestRivalChessman().getPosition());
+			as.actionType = ATTACK_ACTION;						
+			as.doAction();
+			isInForbidMode = false;
+		}
+	}
+	
+	protected boolean shouldCalculate(){
+		if( !isInForbidMode || (getLargestRivalSize()!= ChessmanSprite.LARGE_SIZE 
+				|| (this.chessmanInForbidMode == null) ))
+			return true;
+		else if(this.chessmanInForbidMode.isDead == true)
+			return true;
+		else
+			return false;
 	}
 	
 	protected void useProp(){
@@ -179,12 +201,11 @@ public class AIController {
 				this.usedProp = createUseProp();
 			}
 		}
-		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
+		//if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
 			canPowerUp = false;
 	}
 	
 	protected boolean ForbidProcess(){
-		//TODO
 		ChessmanSprite rivalChessman = getLargestRivalChessman();
 		if(rivalChessman == null)
 			return false;
@@ -198,14 +219,23 @@ public class AIController {
 			if ( !checkInLine(myChessman, rivalChessman, false)){
 				//如果打不出，并且加力也打不出，去判断是否两次打能够打出
 				if ( !canBounceOff(myChessman, rivalChessman, false) && !canBounceOff(myChessman, rivalChessman, true) ){
-					
+					if ( canBounceOffTwoTimes(myChessman, rivalChessman) )
+					{
+						//TODO
+						this.isInForbidMode = true;
+						this.chessmanInForbidMode = myChessman;
+						ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
+						as.actionType = ATTACK_ACTION;						
+						as.point = 100000;
+						actionArray.add(as);
+						workToDoOnForbid();
+						return true;
+					}
 				}
 			} else {
 				//TODO 斜线能不能打掉。
 			}
-			
 		}
-		workToDoOnForbid();
 		return false;
 	}
 	
@@ -423,7 +453,7 @@ public class AIController {
 	}
 
 	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
-		return canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), null , null);
+		return canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), null , null, powerUp);
 	}
 	
 	
@@ -432,51 +462,16 @@ public class AIController {
 	 */
 	protected boolean canBounceOffTwoTimes(ChessmanSprite from, ChessmanSprite to)
 	{
-		boolean result = false;
-		float impulse = 0;
-		float fromDamping = 0.0f;
-		float toDamping = 0.0f;
-		if (from.getScale() == ChessmanSprite.SMALL_SIZE) {
-			impulse = this.MAX_S_SPEED;
-			fromDamping = this.S_LinearDamping;
-		} else if (from.getScale() == ChessmanSprite.LARGE_SIZE) {
-			impulse = this.MAX_L_SPEED;
-			fromDamping = this.L_LinearDamping;
-		} else if (from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
-			impulse = this.MAX_M_SPEED;
-			fromDamping = this.M_LinearDamping;
+		Vector2 fromFinalPos = new Vector2();
+		Vector2 toFinalPos = new Vector2();
+		canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false);
+		if(canBounceOff(fromFinalPos, toFinalPos, from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false)){
+			return true;
 		}
-		if (to.getScale() == ChessmanSprite.SMALL_SIZE) {
-			toDamping = this.S_LinearDamping;
-		} else if (to.getScale() == ChessmanSprite.LARGE_SIZE) {
-			toDamping = this.L_LinearDamping;
-		} else if (to.getScale() == ChessmanSprite.MEDIUM_SIZE) {
-			toDamping = this.M_LinearDamping;
-		}
-		float speed = impulse / this.mass;
-		float fromR = from.getScale() * 26;
-		float toR = to.getScale() * 26;
-		float from2ToDistance = getDistance(from, to);
-		float distance_in_box2d = (from2ToDistance - fromR - toR) / mPixelToMeterRatio;
-		float distance_try = 0.0f;
-		while (speed > attack_speed_inaccuracy && distance_in_box2d > distance_try) {
-			distance_try += speed * this.STEPDT;
-			speed *= 1.0f - fromDamping * this.STEPDT;
-		}
-		if (distance_in_box2d >= distance_try || speed <= attack_speed_inaccuracy)
-		{
-			float distance_can_move = this.getMoveDistance(speed, toDamping) * mPixelToMeterRatio;
-			float coefficient = 1 / from2ToDistance;
-			Vector2 from2ToVec = new Vector2(to.getPosition().x - from.getPosition().x, 
-					to.getPosition().y - from.getPosition().y);
-			Vector2 impulseVec = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
-			result = this.checkOut(to.getPosition(), distance_can_move, impulseVec);
-		}
-		return result;
-		
+		return false;
 	}
 	
-	protected boolean canBounceOff(Vector2 fromPos, Vector2 toPos, float fromSize , float toSize ,Vector2 fromFinalPos, Vector2 toFinalPos){
+	protected boolean canBounceOff(Vector2 fromPos, Vector2 toPos, float fromSize , float toSize ,Vector2 fromFinalPos, Vector2 toFinalPos, boolean powerUp){
 		boolean result = false;
 		float impulse = 0;
 		float fromDamping = 0.0f;
@@ -499,6 +494,8 @@ public class AIController {
 			toDamping = this.M_LinearDamping;
 		}
 		float speed = impulse / this.mass;
+		if(powerUp)
+			speed *= 1.4f;
 		float fromR = fromSize * 26;
 		float toR = toSize * 26;
 		float from2ToDistance = getDistance(fromPos, toPos);
@@ -516,10 +513,12 @@ public class AIController {
 				toPos.y - fromPos.y);
 		Vector2 impulseVec = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
 		if(fromFinalPos != null && toFinalPos != null){
-			toFinalPos = getToChessmanFinalPos(toPos, distance_can_move, impulseVec);
-			fromFinalPos = getFromChessmanFinalPos( toPos, toR+fromR ,new Vector2(-impulseVec.x, -impulseVec.y));
+			toFinalPos.x = getToChessmanFinalPos(toPos, distance_can_move, impulseVec).x;
+			toFinalPos.y = getToChessmanFinalPos(toPos, distance_can_move, impulseVec).y;
+			fromFinalPos.x = getFromChessmanFinalPos( toPos, toR+fromR ,new Vector2(-impulseVec.x, -impulseVec.y)).x;
+			fromFinalPos.y = getFromChessmanFinalPos( toPos, toR+fromR ,new Vector2(-impulseVec.x, -impulseVec.y)).y;
 			result = this.checkOut(toFinalPos);
-		}else{
+		}else {
 			result = this.checkOut(toPos, distance_can_move, impulseVec);
 		}
 		return result;
