@@ -143,6 +143,7 @@ public class ChessmanSprite extends Sprite {
 			this.mImage.setAlpha(0.6f);
 			this.mSelected = true;
 			gameScene.turnValid = false;
+			gameScene.isValid = false;
 			mGunsight.setScale(0);
 			mGunsight.setPosition(this.getPosition().x - mGunsight.getWidth()
 					/ 2, this.getPosition().y - mGunsight.getHeight() / 2);
