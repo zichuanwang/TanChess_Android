@@ -263,7 +263,7 @@ public class AIController {
 			return false;
 		if(!rivalChessman.isLarge())
 			return false;
-		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext(); ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
 			if (checkBumpHingeWhenAttack(myChessman, rivalChessman))
@@ -291,65 +291,69 @@ public class AIController {
 	}
 	
 	protected boolean EnlargeProcess(){
+		ChessmanSprite bestChoice = null;
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
-			if(chessman.isMedium() && ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()))
-			{
-				workToDoOnEnlarge(chessman);
-				return true;
-			} else if(chessman.isMedium() && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && random(25)){
-				workToDoOnEnlarge(chessman);
-				return true;
-			} else if(chessman.isSmall() && (this.getLargestRivalSize() == ChessmanSprite.SMALL_SIZE)) {
-				if ( ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && random(50))
-				{
-					workToDoOnEnlarge(chessman);
-					return true;
-				}else if ( ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && random(25))
-				{
-					workToDoOnEnlarge(chessman);
-					return true;
+			if(bestChoice == null) {
+				bestChoice = chessman;
+				continue;
+			}
+			if(chessman.isMedium() && bestChoice.isSmall()) {
+				bestChoice = chessman;
+				continue;
+			}
+			if(chessman.isSmall() && bestChoice.isMedium())
+				continue;
+			if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
+					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition())) {
+				bestChoice = chessman;
+			} else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
+					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition())){
+				if(!ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
+						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, bestChoice.getPosition())) {
+					bestChoice = chessman;
 				}
 			}
 		}
-		return false;
+		workToDoOnEnlarge(bestChoice);
+		return true;
 	}
 	
-	protected boolean ExchangeProcess(){
+	protected ChessmanSprite getBestRivalChessman() {
+		ChessmanSprite largestRival = this.getLargestRivalChessman();
+		if(this.getLargestRivalChessman().isLarge() || rivalChessmans.size() <= 1) {
+			return largestRival;
+		}
+		ChessmanSprite bestChoice = null;
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
-			if(chessman.isLarge())
-			{
+			if(bestChoice == null) {
+				bestChoice = chessman;
+				continue;
+			}
+			if(chessman.isMedium()){
 				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
-						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition() )) 
-				{
-					workToDoOnExchange(chessman);
-					return true;
-				}else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
-						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && this.random(50))
-				{
-					workToDoOnExchange(chessman);
-					return true;
-				}else if(rivalChessmans.size() <= 3 && this.random(50)){
-					workToDoOnExchange(chessman);
-					return true;
+						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) ) {
+					bestChoice = chessman;
 				}
-			}else if( chessman.isMedium()){
-				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
-						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && this.random(20) ) 
-				{
-					workToDoOnExchange(chessman);
-					return true;
+				else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
+						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) )  {
+					if(!ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
+							ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, bestChoice.getPosition()) ) {
+						bestChoice = chessman;
+					}
 				}
 			}
 		}
-		return false;
+		return bestChoice;
+	}
+	
+	protected boolean ExchangeProcess(){
+		ChessmanSprite bestChoice = this.getBestRivalChessman();
+		workToDoOnExchange(bestChoice);
+		return true;
 	}
 	
 	protected void workToDoOnExchange(ChessmanSprite chessman){
@@ -1100,17 +1104,17 @@ public class AIController {
 	 * 获取当前对方最大的棋子
 	 */
 	protected ChessmanSprite getLargestRivalChessman(){
-		float largest = 0;
-		ChessmanSprite _largest = null;
+		float largestSize = 0;
+		ChessmanSprite largestChessman = null;
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = iter.next();
-			if(rivalChessmans.get(key).getScale() > largest)
+			if(rivalChessmans.get(key).getScale() > largestSize)
 			{
-				largest = rivalChessmans.get(key).getScale();
-				_largest = rivalChessmans.get(key);
+				largestSize = rivalChessmans.get(key).getScale();
+				largestChessman = rivalChessmans.get(key);
 			}
 		}
-		return _largest;
+		return largestChessman;
 	}
 	
 	/*
