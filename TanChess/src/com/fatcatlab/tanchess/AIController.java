@@ -168,17 +168,20 @@ public class AIController {
 		if(shouldCalculate())
 		{
 			useProp();
-			checkLargeChessmanDefence();
-			if(!this.isLargestInDanger)
-			{
-				calculateDefence();
-				calculateAttack();
-			}
+			// 所有的模拟计算要在完成prop动画后进行
+			// isShowingPropImage负责控制白色大图的显示
+			// isUsingEnlargeOrExchangeProp负责控制白色大图显示之后Enlarge或Exchange道具的延迟显示
 			final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
 			currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
 				@Override
 				public void onTimePassed(final TimerHandler pTimerHandler) {
 					if(!isShowingPropImage && !isUsingEnlargeOrExchangeProp) {
+						checkLargeChessmanDefence();
+						if(!isLargestInDanger)
+						{
+							calculateDefence();
+							calculateAttack();
+						}
 						doAction();
 						currentScene.unregisterUpdateHandler(pTimerHandler);
 					}
@@ -332,17 +335,17 @@ public class AIController {
 	protected void workToDoOnExchange(ChessmanSprite chessman){
 		this.propAnimation(PropSprite.CHANGE);
 		final ChessmanSprite toExchangeChessman = chessman;
+		isUsingEnlargeOrExchangeProp = true;
 		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
 		currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				if(!isShowingPropImage) {
+					// 白色大图显示完以后才进行exchange
 					toExchangeChessman.exchange();
 					rivalChessmans.remove(new Integer(toExchangeChessman.chessmanID));
 					myChessmans.put(new Integer(toExchangeChessman.chessmanID), toExchangeChessman);
 					currentScene.unregisterUpdateHandler(pTimerHandler);
-					
-					isUsingEnlargeOrExchangeProp = true;
 					currentScene.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {	
 						@Override
 						public void onTimePassed(final TimerHandler pTimerHandler2) {
@@ -358,15 +361,15 @@ public class AIController {
 	protected void workToDoOnEnlarge(ChessmanSprite chessman){
 		this.propAnimation(PropSprite.ENLARGE);
 		final ChessmanSprite toEnlargeChessman = chessman;
+		isUsingEnlargeOrExchangeProp = true;
 		final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
 		currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				if(!isShowingPropImage) {
+					// 白色大图显示完以后才进行enlarge
 					toEnlargeChessman.changeSize();
 					currentScene.unregisterUpdateHandler(pTimerHandler);
-					
-					isUsingEnlargeOrExchangeProp = true;
 					currentScene.registerUpdateHandler(new TimerHandler(1.0f, true, new ITimerCallback() {	
 						@Override
 						public void onTimePassed(final TimerHandler pTimerHandler2) {
