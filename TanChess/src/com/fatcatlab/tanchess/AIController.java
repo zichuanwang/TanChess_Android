@@ -1017,13 +1017,26 @@ public class AIController {
 	 * 获取当前对方的最大的棋子的大小
 	 */
 	protected float getLargestRivalSize(){
-		float largest = 0;
+		float largest = ChessmanSprite.SMALL_SIZE;
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = iter.next();
 			if(rivalChessmans.get(key).getScale() > largest)
 				largest = rivalChessmans.get(key).getScale();
 		}
 		return largest;
+	}
+	
+	/*
+	 * 获取当前对方的最小的棋子的大小
+	 */
+	protected float getSmallestMySize(){
+		float smallest = ChessmanSprite.LARGE_SIZE;
+		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = iter.next();
+			if(myChessmans.get(key).getScale() < smallest)
+				smallest = myChessmans.get(key).getScale();
+		}
+		return smallest;
 	}
 	
 	/*
@@ -1063,14 +1076,21 @@ public class AIController {
 	 */
 	private int createUseProp(){
 		int randomNumber = (int)(Math.random() * 100);
-		if(randomNumber < 20 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID))
-			return PropSprite.FORBID;
-		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE))
-			return PropSprite.CHANGE;
-		else if(randomNumber < 90 && couldUseProp(PropSprite.ENLARGE))
-			return PropSprite.ENLARGE;
-		else
-			return PropSprite.POWERUP;
+		int decidedPropToUse = -1;
+		if(randomNumber < 30 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID)) {
+			decidedPropToUse = PropSprite.FORBID;
+		}
+		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
+			decidedPropToUse = PropSprite.CHANGE;
+		}
+		else if(randomNumber < 95 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE)) {
+			decidedPropToUse = PropSprite.ENLARGE;
+		}
+		else {
+			decidedPropToUse = PropSprite.POWERUP;
+		}
+		Log.d("PROP", "Decide Prop To Use:"+decidedPropToUse+" Random Number:"+randomNumber);
+		return decidedPropToUse;
 	}
 	
 	/*
@@ -1102,12 +1122,12 @@ public class AIController {
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
-			result += chessman.value/2;
+			result += chessman.value;
 		}
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
-			result += chessman.value;
+			result += chessman.value / 2;
 		}
 		return result;
 	}
