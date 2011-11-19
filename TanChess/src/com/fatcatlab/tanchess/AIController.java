@@ -445,12 +445,14 @@ public class AIController {
 					//TODO PowerUp的算法：
 					if(rivalChessman.isMedium() && this.usedProp != PropSprite.POWERUP)
 						// 如果当前选择使用的道具不是PowerUp并且目标棋子是中型棋子 跳出
-						continue;
+						if(rivalChessmans.size() > 1)
+							// 针对对方只有一个棋子做优化
+							continue;
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
 					if(canBounceOffWithPower) {
 						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman, false);
 						if (!hitOtherChessman) {
-							// 改为一定创建action 但是在最后筛选
+							// 改为一定创建action 但是在最后对大子做筛选
 							ActionStruct as = this.createAttackActionStruct(myChessman, rivalChessman);
 							as.usePowerUp = true;
 						}

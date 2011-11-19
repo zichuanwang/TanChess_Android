@@ -297,6 +297,7 @@ public class GameScene extends AbstractGameScene {
     		Log.d("confirm change turn", "first time");
 			isFirstTime = false;
     		StartActivity.Instance.mSound.startSound.play();
+    		this.mBrain.simulateAI();
 		}
 		StartActivity.Instance.mSound.turnSound.play();
     	Log.d("confirm change turn", "play sound");
