@@ -1,6 +1,8 @@
 package com.fatcatlab.tanchess;
 
 import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -117,6 +119,9 @@ public class AIController {
 	private boolean isInForbidMode = false;
 	private ChessmanSprite chessmanInForbidMode = null;
 	
+	//必须防御（最大子危险）
+	private boolean isLargestInDanger = false;
+	
 	private boolean isShowingPropImage = false;
 	private boolean isUsingEnlargeOrExchangeProp = false;
 	
@@ -163,8 +168,12 @@ public class AIController {
 		if(shouldCalculate())
 		{
 			useProp();
-			calculateDefence();	
-			calculateAttack();
+			checkLargeChessmanDefence();
+			if(!this.isLargestInDanger)
+			{
+				calculateDefence();
+				calculateAttack();
+			}
 			final GameScene currentScene = StartActivity.Instance.getmMainScene().mGameScene;
 			currentScene.registerUpdateHandler(new TimerHandler(0.1f, true, new ITimerCallback() {	
 				@Override
@@ -828,43 +837,99 @@ public class AIController {
 	}
 	
 	protected void calculateDefence() {
+		calculateDefencePriority();
+	}
+	
+	protected void checkLargeChessmanDefence(){
+		//TODO 防御最大子被打出去算法
+		List<ChessmanSprite> largestList = getLargestMyChessman();
+		if(largestList.size() == 0)
+			return;
+		for(int i = 0 ; i < largestList.size() ; i++){
+			ChessmanSprite myChessman = largestList.get(i);
+			for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
+				Integer key = (Integer) it.next();
+				ChessmanSprite rivalChessman = rivalChessmans.get(key);
+				if( checkBumpHinge(rivalChessman, myChessman) )
+					continue;
+				if (checkInLineWithoutPowerUp(rivalChessman, myChessman, false))
+					continue;
+				if (canBounceOff(rivalChessman, myChessman, false)){
+					//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
+					if( !checkBumpHinge(myChessman, rivalChessman) && !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)
+							&& canBounceOff(myChessman, rivalChessman, false) ){
+						if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+							ActionStruct as = createActionStruct(myChessman, rivalChessman);
+							actionArray.add(as);
+						}else if(random(10) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+							ActionStruct as = createActionStruct(myChessman, rivalChessman);
+							actionArray.add(as);
+						}
+					}else{
+						//TODO 防御
+						calculateChessmanDefence(myChessman);
+					}
+				}
+				else if (canBounceOff(rivalChessman, myChessman, true)){
+					//打不掉。要考虑对方加力的情况
+				}
+			}
+		}
+		
+		if(actionArray.size() != 0)
+			this.isLargestInDanger = true;
+		else
+			this.isLargestInDanger = false;
+	}
+	
+	protected void calculateChessmanDefence(ChessmanSprite myChessman){
 		Vector2 bestPos = new Vector2(this.halfScreenWidth, this.halfScreenHeight);
+		Vector2 destinationVector = getDefenceDirection(myChessman);
+		boolean willHitOtherChess = false;
+		boolean willHitHinge = false;
+		for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext();) {
+			Integer key2 = (Integer) it2.next();
+			ChessmanSprite check = allChessmans.get(key2);
+			float checkR = check.getScale() * 26;
+			if(check == myChessman)
+				continue;
+			if (check.isDead )
+				continue;
+			float from2ToDistance = myChessman.getPosition().dst(check.getPosition());
+			if( checkBumpHingeWhenDefence(myChessman, destinationVector) ){
+				willHitHinge = true;
+				break;
+			}
+			if(checkChessmanBetweenLine(myChessman, destinationVector, check.getPosition(), checkR, from2ToDistance) )
+			{
+				willHitOtherChess = true;
+				break;
+			}
+		}
+		ActionStruct as = new ActionStruct(myChessman, destinationVector);
+		as.defenceSpeed = this.calculateSpeed(myChessman, destinationVector);
+		as.point = ChessmanSprite.calculateValue(myChessman.value, bestPos) - myChessman.calculateValue();
+		as.point *= 0.1f;
+		as.actionType = DEFENCE_ACTION;
+		if(as.defenceSpeed > as.maxSpeed)
+			as.point = 1;
+		if(willHitHinge) 
+			as.point -= 10000;
+		if(willHitOtherChess)
+			as.point -= 500;
+		if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)
+			as.point -= 5000;
+		//Log.d("DEFENCE POINT:", ""+as.point );
+		actionArray.add(as);
+	}
+	
+	protected void calculateDefencePriority(){
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
 			if (myChessman.isDead)
 				continue;
-			Vector2 destinationVector = getDefenceDirection(myChessman);
-			boolean willHitOtherChess = false;
-			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext();) {
-				Integer key2 = (Integer) it2.next();
-				ChessmanSprite check = allChessmans.get(key2);
-				float checkR = check.getScale() * 26;
-				if(check == myChessman)
-					continue;
-				if (check.isDead )
-					continue;
-				float from2ToDistance = myChessman.getPosition().dst(check.getPosition());
-				if(checkChessmanBetweenLine(myChessman, destinationVector, check.getPosition(), checkR, from2ToDistance) ||
-						!checkBumpHingeWhenDefence(myChessman, destinationVector) )
-				{
-					willHitOtherChess = true;
-					break;
-				}
-			}
-			ActionStruct as = new ActionStruct(myChessman, destinationVector);
-			as.defenceSpeed = this.calculateSpeed(myChessman, destinationVector);
-			as.point = ChessmanSprite.calculateValue(myChessman.value, bestPos) - myChessman.calculateValue();
-			as.point *= 0.16f;
-			as.actionType = DEFENCE_ACTION;
-			if(as.defenceSpeed > as.maxSpeed)
-				as.point = 1;
-			if(willHitOtherChess) 
-				as.point -= 500;
-			if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)
-				as.point -= 5000;
-			//Log.d("DEFENCE POINT:", ""+as.point );
-			actionArray.add(as);
+			calculateChessmanDefence(myChessman);
 		}
 	}
 	
@@ -970,6 +1035,21 @@ public class AIController {
 			{
 				largest = rivalChessmans.get(key).getScale();
 				_largest = rivalChessmans.get(key);
+			}
+		}
+		return _largest;
+	}
+	
+	/*
+	 * 获取自己大子的队列
+	 */
+	protected List<ChessmanSprite> getLargestMyChessman(){
+		List<ChessmanSprite> _largest = new LinkedList<ChessmanSprite>();
+		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+			Integer key = iter.next();
+			if(myChessmans.get(key).getScale() == ChessmanSprite.LARGE_SIZE)
+			{
+				_largest.add(myChessmans.get(key));
 			}
 		}
 		return _largest;
