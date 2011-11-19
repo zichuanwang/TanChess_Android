@@ -104,7 +104,7 @@ public class AIController {
 	private final float attack_distance_inaccuracy = 4.0f;
 	
 	//边界冗余 
-	private final int PowerUpBorderRedundancy = 8 ; 
+	private final int BorderRedundancy = 8 ; 
 	
 	private boolean canPowerUp = false;
 	private boolean canForbid = false;
@@ -236,7 +236,7 @@ public class AIController {
 			ChessmanSprite myChessman = myChessmans.get(key);
 			if ( checkBumpHinge(myChessman, rivalChessman) )
 				continue;
-			if ( !checkInLine(myChessman, rivalChessman, false)){
+			if ( !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)){
 				//如果打不出，并且加力也打不出，去判断是否两次打能够打出
 				if ( !canBounceOff(myChessman, rivalChessman, false) && !canBounceOff(myChessman, rivalChessman, true) ){
 					if ( canBounceOffTwoTimes(myChessman, rivalChessman) )
@@ -401,39 +401,35 @@ public class AIController {
 				ChessmanSprite rivalChessman = rivalChessmans.get(key2);
 				if (rivalChessman.isDead)
 					continue;
+				boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
+				if(hitHinge)
+					continue;
 				boolean canBounceOffWithoutPower = canBounceOff(myChessman, rivalChessman, false);
 				if (canBounceOffWithoutPower) {
 					//Log.d("CAN BOUNCE OFF", "can bounce off");
-					boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
-					if( !hitHinge ){
-						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman ,true);
-						if (!hitOtherChessman) {
-							this.createActionStruct(myChessman, rivalChessman);
-						}
-						else{
-							//Log.d("CAN BOUNCE OFF", "but hitHing:"+hitHinge+" hitOtherChessman:"+hitOtherChessman);
-						}
+					boolean hitOtherChessman = checkInLineWithoutPowerUp(myChessman, rivalChessman ,true);
+					if (!hitOtherChessman) {
+						this.createActionStruct(myChessman, rivalChessman);
 					}
 				}else if(this.canPowerUp && rivalChessman.getScale() != ChessmanSprite.SMALL_SIZE){
 					//TODO powerup的算法：
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
 					if(canBounceOffWithPower){
-						boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
-						if (!hitHinge){
-							boolean hitOtherChessman = checkInLine(myChessman, rivalChessman, true);
-							if (!hitHinge && !hitOtherChessman) {
-								if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
-								{
-									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-									as.usePowerUp = true;
-								}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.usedProp == PropSprite.POWERUP){
-									ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-									as.usePowerUp = true;
-								}
+						boolean hitOtherChessman = checkInLineWithPowerUp(myChessman, rivalChessman, true);
+						if (!hitHinge && !hitOtherChessman) {
+							if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
+							{
+								ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+								as.usePowerUp = true;
+							}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.usedProp == PropSprite.POWERUP){
+								ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
+								as.usePowerUp = true;
 							}
 						}
 					}
 				}
+				
+				
 			}
 		}
 	}
@@ -452,7 +448,7 @@ public class AIController {
 		return as;
 	}
 	
-	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman , ChessmanSprite _rivalChessman){
+	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman , ChessmanSprite _rivalChessman , boolean powerUp){
 		int myPoint = myChessman.calculateValue();
 		int rivalPoint1 = rivalChessman.calculateValue();
 		int rivalPoint2 = _rivalChessman.calculateValue();
@@ -462,6 +458,8 @@ public class AIController {
 		ActionStruct as = new ActionStruct(myChessman, attackPos );
 		as.actionType = ATTACK_ACTION;
 		as.point = myFinalPoint - myPoint + rivalPoint;
+		if(powerUp)
+			as.usePowerUp = true;
 		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
 		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
 		actionArray.add(as);
@@ -667,6 +665,14 @@ public class AIController {
 			result = false;
 		return result;
 	}
+	
+	protected boolean checkBumpHingeWhenDefence(ChessmanSprite from, Vector2 toPos){
+		float from2ToDistance = getDistance(from.getPosition(), toPos);
+		if((checkChessmanBetweenLine(from, toPos, L_Hinge, hingeR, from2ToDistance))  == false 
+				&& (checkChessmanBetweenLine(from, toPos, R_Hinge, hingeR , from2ToDistance) == false))
+			return false;
+		return true;
+	}
 
 	protected float getPointLineDistance(Vector2 point, float a, float b, float c) {
 		return (float) Math.abs((a * point.x + b * point.y + c) / Math.sqrt(a * a + b * b));
@@ -680,11 +686,19 @@ public class AIController {
 		}
 		return distance;
 	}
+	
+	protected boolean checkInLineWithPowerUp(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy){
+		return checkInLineBase(from, to, shouldConcernAboutRedundancy, true);
+	}
+	
+	protected boolean checkInLineWithoutPowerUp(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy){
+		return checkInLineBase(from, to, shouldConcernAboutRedundancy, false);
+	}
 
 	/*
 	 * shouldConcernAboutRedundancy为true的时候去计算靠近边沿可以打的情况。不然不考虑
 	 */
-	protected boolean checkInLine(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy) {
+	protected boolean checkInLineBase(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy, boolean powerUp) {
 		float from2ToDistance = this.getDistance(from, to);
 		for (Iterator<Integer> it = allChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
@@ -700,7 +714,7 @@ public class AIController {
 					if(( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26 ) 
 							&& shouldConcernAboutRedundancy && to.getGroup() != this.player && current.getGroup() != this.player )
 					{
-						if ( isNearBorder(to , PowerUpBorderRedundancy) )
+						if ( isNearBorder(to , BorderRedundancy) || isNearBorder(current, BorderRedundancy ))
 						{
 							boolean shouldCreateActionStruct = true;
 							//TODO 遍历其他的棋子。判断是否在之间，是否有挡着
@@ -718,13 +732,13 @@ public class AIController {
 								}
 							}
 							if(shouldCreateActionStruct)
+							{
 								//create the structure
-								this.createActionStruct( from, to ,current );
+								this.createActionStruct( from, to ,current ,powerUp);
+							}
 						}
-						return true;
-					} else {
-						return true;
 					}
+					return true;
 				}
 			}
 		}
@@ -814,17 +828,14 @@ public class AIController {
 	}
 	
 	protected void calculateDefence() {
-		//find the biggest chess that could move to the center of the chessboard. 
-		// check if there exits other chessmans between it and the point.
 		Vector2 bestPos = new Vector2(this.halfScreenWidth, this.halfScreenHeight);
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
 			if (myChessman.isDead)
 				continue;
-			//check if there is some chessman between current and the point
 			Vector2 destinationVector = getDefenceDirection(myChessman);
-			boolean needCheck = false;
+			boolean willHitOtherChess = false;
 			for (Iterator<Integer> it2 = allChessmans.keySet().iterator(); it2.hasNext();) {
 				Integer key2 = (Integer) it2.next();
 				ChessmanSprite check = allChessmans.get(key2);
@@ -834,9 +845,10 @@ public class AIController {
 				if (check.isDead )
 					continue;
 				float from2ToDistance = myChessman.getPosition().dst(check.getPosition());
-				if(checkChessmanBetweenLine(myChessman, destinationVector, check.getPosition(), checkR, from2ToDistance))
+				if(checkChessmanBetweenLine(myChessman, destinationVector, check.getPosition(), checkR, from2ToDistance) ||
+						!checkBumpHingeWhenDefence(myChessman, destinationVector) )
 				{
-					needCheck = true;
+					willHitOtherChess = true;
 					break;
 				}
 			}
@@ -847,8 +859,8 @@ public class AIController {
 			as.actionType = DEFENCE_ACTION;
 			if(as.defenceSpeed > as.maxSpeed)
 				as.point = 1;
-			if(needCheck) 
-				as.point -= 10000;
+			if(willHitOtherChess) 
+				as.point -= 500;
 			if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)
 				as.point -= 5000;
 			//Log.d("DEFENCE POINT:", ""+as.point );
