@@ -843,11 +843,44 @@ public class AIController {
 		calculateDefencePriority();
 	}
 	
+	protected boolean LargeChessmanBeatBack(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
+		//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
+		if( !checkBumpHinge(myChessman, rivalChessman) && !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)){
+			if (canBounceOff(myChessman, rivalChessman, false))
+			{
+				if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+					ActionStruct as = createActionStruct(myChessman, rivalChessman);
+					actionArray.add(as);
+					return true;
+				}else if(random(10) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+					ActionStruct as = createActionStruct(myChessman, rivalChessman);
+					actionArray.add(as);
+					return true;
+				}
+			}
+			else if( canBounceOff(myChessman, rivalChessman, true) && rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE ){
+				if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+					ActionStruct as = createActionStruct(myChessman, rivalChessman);
+					actionArray.add(as);
+					return true;
+				}else if(random(50) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
+					ActionStruct as = createActionStruct(myChessman, rivalChessman);
+					actionArray.add(as);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	protected void checkLargeChessmanDefence(){
 		//TODO 防御最大子被打出去算法
 		List<ChessmanSprite> largestList = getLargestMyChessman();
 		if(largestList.size() == 0)
+		{
+			this.isLargestInDanger = false;
 			return;
+		}
 		for(int i = 0 ; i < largestList.size() ; i++){
 			ChessmanSprite myChessman = largestList.get(i);
 			for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
@@ -859,22 +892,14 @@ public class AIController {
 					continue;
 				if (canBounceOff(rivalChessman, myChessman, false)){
 					//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
-					if( !checkBumpHinge(myChessman, rivalChessman) && !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)
-							&& canBounceOff(myChessman, rivalChessman, false) ){
-						if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-							ActionStruct as = createActionStruct(myChessman, rivalChessman);
-							actionArray.add(as);
-						}else if(random(10) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-							ActionStruct as = createActionStruct(myChessman, rivalChessman);
-							actionArray.add(as);
-						}
-					}else{
-						//TODO 防御
+					if ( !LargeChessmanBeatBack(myChessman, rivalChessman))
 						calculateChessmanDefence(myChessman);
-					}
 				}
 				else if (canBounceOff(rivalChessman, myChessman, true)){
-					//打不掉。要考虑对方加力的情况
+					//如果自己只有唯一一个大子了，则必须考虑，有2个或者以上大子的话则20的概率去考虑
+					if( largestList.size() < 1 || random(20))
+						if ( !LargeChessmanBeatBack(myChessman,rivalChessman))
+							calculateChessmanDefence(myChessman);
 				}
 			}
 		}
@@ -1127,7 +1152,7 @@ public class AIController {
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
-			result += chessman.value / 2;
+			result += chessman.value/2;
 		}
 		return result;
 	}
