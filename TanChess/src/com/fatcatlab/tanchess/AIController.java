@@ -847,7 +847,10 @@ public class AIController {
 		//TODO 防御最大子被打出去算法
 		List<ChessmanSprite> largestList = getLargestMyChessman();
 		if(largestList.size() == 0)
+		{
+			this.isLargestInDanger = false;
 			return;
+		}
 		for(int i = 0 ; i < largestList.size() ; i++){
 			ChessmanSprite myChessman = largestList.get(i);
 			for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
@@ -1102,12 +1105,12 @@ public class AIController {
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
-			result += chessman.value/2;
+			result += chessman.value;
 		}
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
-			result += chessman.value;
+			result += chessman.value/2;
 		}
 		return result;
 	}
