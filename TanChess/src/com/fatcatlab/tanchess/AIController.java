@@ -620,7 +620,7 @@ public class AIController {
 			if(powerUp)
 				from2ToDistance += toR;
 			else
-				from2ToDistance += toR * 2;
+				from2ToDistance += toR * 3;
 		}
 		float distance_in_box2d = (from2ToDistance - fromR - toR) / mPixelToMeterRatio;
 		float distance_try = 0.0f;
@@ -699,9 +699,19 @@ public class AIController {
 		boolean result = true;
 		float from2ToDistance = from.getPosition().dst(to.getPosition());
 		float realhingeR = this.getRealHingeR(from, to);
-		if (!checkChessmanBetweenLine(from, to.getPosition(), L_Hinge, realhingeR, from2ToDistance)
-				&& !checkChessmanBetweenLine(from, to.getPosition(), R_Hinge, realhingeR, from2ToDistance))
-			result = false;
+		float L_HingeR = this.calculateNeededR(from, to, L_Hinge);
+		float R_HingeR = this.calculateNeededR(from, to, R_Hinge);
+		if(Math.abs(from.getPosition().y - this.halfScreenHeight) > from.getScale() * 26 + this.hingeHalfHeight
+				&& Math.abs(to.getPosition().y - this.halfScreenHeight) > to.getScale() * 26 + this.hingeHalfHeight) {
+			if (!checkChessmanBetweenLine(from, to.getPosition(), L_Hinge, realhingeR, from2ToDistance)
+					&& !checkChessmanBetweenLine(from, to.getPosition(), R_Hinge, realhingeR, from2ToDistance))
+				result = false;
+		}
+		else {
+			if (!checkChessmanInLine(from, to.getPosition(), L_Hinge, realhingeR, L_HingeR, from2ToDistance)
+					&& !checkChessmanInLine(from, to.getPosition(), R_Hinge, realhingeR, R_HingeR, from2ToDistance))
+				result = false;
+		}
 		return result;
 	}
 	

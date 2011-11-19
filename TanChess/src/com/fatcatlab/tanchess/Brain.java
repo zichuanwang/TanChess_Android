@@ -40,7 +40,7 @@ public class Brain {
 	// ai part
 	public boolean is_AI = false;
 	private AIController aiController;
-	private AIController aiController2;
+	//private AIController aiController2;
 	
 	Brain(int player1Life, int player2Life) {
 		mPlayer1Life = player1Life;
@@ -64,8 +64,8 @@ public class Brain {
 			this.is_AI = true;
 			aiController = new AIController(PLAYER2);
 			aiController.owner = this;
-			aiController2 = new AIController(PLAYER1);
-			aiController2.owner = this; 
+			//aiController2 = new AIController(PLAYER1);
+			//aiController2.owner = this; 
 		}
 	}
 
@@ -218,11 +218,11 @@ public class Brain {
 						(aiController.player == Brain.PLAYER1) ? mPlayer1Score : mPlayer2Score);
 				aiController.simulate();
 			}
-			if (this.mCurrentPlayer == aiController2.player) {
+			/*if (this.mCurrentPlayer == aiController2.player) {
 				aiController2.init(this.mChessmans, this.mProps,
 						(aiController2.player == Brain.PLAYER1) ? mPlayer1Score : mPlayer2Score);
 				aiController2.simulate();
-			}
+			}*/
 		}
 	}
 
