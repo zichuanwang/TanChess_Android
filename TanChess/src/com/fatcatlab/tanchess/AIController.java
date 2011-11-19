@@ -69,6 +69,7 @@ public class AIController {
 			float coefficient = speed / distance;
 			Vector2 from2ToVec = new Vector2(toPos.x - fromPos.x, toPos.y - fromPos.y);
 			Vector2 impulse = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
+			StartActivity.Instance.mSound.fireSound.play();
 			from.mBody.applyLinearImpulse(impulse, from.mBody.getPosition());
 		}
 	}

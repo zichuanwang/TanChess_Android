@@ -440,10 +440,12 @@ public class ChessmanSprite extends Sprite {
 		if(!isBetrayed) {
 			this.mRivalcolor.setVisible(true);
 			this.setAlpha(0);
+			this.mRivalcolor.setAlpha(1);
 		}
 		else {
 			this.mRivalcolor.setVisible(false);
 			this.mRivalcolor.setAlpha(0);
+			this.setAlpha(1);
 		}
 		isBetrayed = !isBetrayed;
 }
