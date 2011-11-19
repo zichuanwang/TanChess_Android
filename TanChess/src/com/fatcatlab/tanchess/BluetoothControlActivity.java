@@ -1,5 +1,7 @@
 package com.fatcatlab.tanchess;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,6 +24,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class BluetoothControlActivity extends Activity {
 
@@ -32,24 +36,23 @@ public class BluetoothControlActivity extends Activity {
 
 	private ArrayAdapter<String> mPairedDevicesArrayAdapter;
 	private ArrayAdapter<String> mNewDevicesArrayAdapter;
+	
+	private Handler handler = new Handler();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// TODO Auto-generated method stub
 		Log.d(TAG, "----Oncreate-----");
-
+		
+		
 		setContentView(R.layout.main);
 
 		Button scanButton = (Button) findViewById(R.id.button_scan);
 		scanButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				mNewDevicesArrayAdapter.clear();
 				doDiscovery();
-				v.setVisibility(View.GONE);
-
-				//Log.d("sendmessage", "---------Message--------------");
-				//StartActivity.Instance.getmMainScene().mBtGameScene
-				//		.sendMessage("aaaaaaaa");
 			}
 		});
 
@@ -77,56 +80,78 @@ public class BluetoothControlActivity extends Activity {
 		// Register for broadcasts when discovery has finished
 		filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 		this.registerReceiver(mReceiver, filter);
+		
+		//Register for bound when a device is not bounded
+		filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED); 
+		this.registerReceiver(mReceiver, filter);
+		
 
 		// Get the local Bluetooth adapter
 		mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
-		// Get a set of currently paired devices
+		
+		
+		if(!mBtAdapter.isEnabled()){
+            //创建一个intent对象，感对象用于启动一个Activity，提示用户开启蓝牙设备
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivity(intent);
+	    }
+		
+        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        startActivity(intent);		
+        
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				boolean shouldCheck = true;
+				while( shouldCheck ){
+					if(BluetoothService.getService().getState() == BluetoothService.STATE_CONNECTED)
+					{
+						shouldCheck = false;
+						Intent itent = new Intent();
+						itent.setClass(BluetoothControlActivity.this, StartActivity.class);
+						StartActivity.Instance.startActivity(itent);
+						StartActivity.SCENE_STATE = StartActivity.STATE_BTGAMESCENE;
+					}
+				}
+			}
+		}, 1000);
+		
+		Runnable task = new Runnable() {  
+	        public void run() {  
+	            // TODO Auto-generated method stub  
+	            if ( mBtAdapter.isEnabled() == true) {  
+	            	mPairedDevicesArrayAdapter.clear();
+	                updateBoundedList();
+	            }  
+                handler.postDelayed(this, 500);  
+	        }  
+	    };  
+	    
+	    handler.postDelayed(task, 0);
+		
+	}
+	
+	private void updateBoundedList(){
 		Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
-
 		// If there are paired devices, add each one to the ArrayAdapter
 		if (pairedDevices.size() > 0) {
-			findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 			for (BluetoothDevice device : pairedDevices) {
+				findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 				mPairedDevicesArrayAdapter.add(device.getName() + "\n"
 						+ device.getAddress());
+				Toast.makeText(BluetoothControlActivity.this, "正在等待对方建立连接>>>", Toast.LENGTH_SHORT).show();
 			}
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired)
 					.toString();
 			mPairedDevicesArrayAdapter.add(noDevices);
 		}
-
-		/*
-		 * final List<String> lstDevices = new ArrayList<String>();
-		 * 
-		 * // ������豸 Set<BluetoothDevice> pairedBluetoothDevices = mBtAdapter
-		 * .getBondedDevices(); if (pairedBluetoothDevices.size() > 0) { for
-		 * (BluetoothDevice device : pairedBluetoothDevices) {
-		 * lstDevices.add(device.getName() + "\n" + device.getAddress()); } }
-		 */
-
-		Timer timer = new Timer();
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				boolean jump = false;
-				while (!jump) {
-					if (BluetoothService.getService().getState() == BluetoothService.STATE_CONNECTED) {
-						Intent itent = new Intent();
-						itent.setClass(BluetoothControlActivity.this,
-								StartActivity.class);
-						StartActivity.Instance.startActivity(itent);
-						StartActivity.SCENE_STATE = StartActivity.STATE_BTGAMESCENE;
-						jump = true;
-					}
-				}
-			}
-		}, 1000);
-
 	}
-
+	
+	
 	/**
 	 * Start device discover with the BluetoothAdapter
 	 */
@@ -160,19 +185,19 @@ public class BluetoothControlActivity extends Activity {
 			String info = ((TextView) v).getText().toString();
 			String address = info.substring(info.length() - 17);
 
-			// Create the result Intent and include the MAC address
-			// Intent intent = new Intent();
-			// intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
-
-			Log.d("device address", address);
-
 			BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
 			// Attempt to connect to the device
-			BluetoothService.getService().connect(device);
+			if(device.getBondState() == BluetoothDevice.BOND_BONDED)
+				BluetoothService.getService().connect(device);
+			else if (device.getBondState() == BluetoothDevice.BOND_NONE) {
+                try {
+					BluetoothControlActivity.createBond(device.getClass(), device);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            }
 
-			// Set result and finish this Activity
-			// setResult(Activity.RESULT_OK, intent);
-			// finish();
 		}
 	};
 
@@ -204,8 +229,37 @@ public class BluetoothControlActivity extends Activity {
 							R.string.none_found).toString();
 					mNewDevicesArrayAdapter.add(noDevices);
 				}
-			}
+			}else if(BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)){  
+				BluetoothDevice device = intent
+						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                switch (device.getBondState()) {  
+                case BluetoothDevice.BOND_BONDING:  
+	                Toast.makeText(BluetoothControlActivity.this, "Bonding...", Toast.LENGTH_SHORT).show();
+                    break;  
+                case BluetoothDevice.BOND_BONDED:  
+	                Toast.makeText(BluetoothControlActivity.this, "Bonding Finished...", Toast.LENGTH_SHORT).show();
+	                mNewDevicesArrayAdapter.remove(device.getName()+"\n"+device.getAddress());
+                    break;  
+                case BluetoothDevice.BOND_NONE:  
+	                Toast.makeText(BluetoothControlActivity.this, "Bonding Canceled...", Toast.LENGTH_SHORT).show();
+                default:  
+                    break;  
+                }  
+            }   
 		}
 	};
+
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		this.unregisterReceiver(mReceiver);  
+		super.onDestroy();
+	}
+	
+	static public boolean createBond(Class btClass,BluetoothDevice btDevice) throws Exception {    
+	    Method createBondMethod = btClass.getMethod("createBond");    
+	    Boolean returnValue = (Boolean) createBondMethod.invoke(btDevice);    
+	    return returnValue.booleanValue();    
+	}
 
 }

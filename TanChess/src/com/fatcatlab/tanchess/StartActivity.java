@@ -127,6 +127,7 @@ public class StartActivity extends BaseGameActivity {
 				this.reloadMainScene();
 				break;
 			case STATE_BTGAMESCENE:
+				BluetoothService.getService().stop();
 				this.reloadMainScene();
 				break;
 			case STATE_AIGAME:
