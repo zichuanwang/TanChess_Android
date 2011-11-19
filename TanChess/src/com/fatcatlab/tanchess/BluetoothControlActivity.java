@@ -1,6 +1,5 @@
 package com.fatcatlab.tanchess;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.Timer;
@@ -92,7 +91,7 @@ public class BluetoothControlActivity extends Activity {
 		
 		
 		if(!mBtAdapter.isEnabled()){
-            //创建一个intent对象，感对象用于启动一个Activity，提示用户开启蓝牙设备
+            //��缓涓�釜intent瀵硅薄锛��瀵硅薄�ㄤ����涓�釜Activity锛��绀虹��峰�������澶�
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivity(intent);
 	    }
@@ -142,7 +141,7 @@ public class BluetoothControlActivity extends Activity {
 				findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 				mPairedDevicesArrayAdapter.add(device.getName() + "\n"
 						+ device.getAddress());
-				Toast.makeText(BluetoothControlActivity.this, "正在等待对方建立连接>>>", Toast.LENGTH_SHORT).show();
+				Toast.makeText(BluetoothControlActivity.this, "这是什么，我这里是乱码", Toast.LENGTH_SHORT).show();
 			}
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired)

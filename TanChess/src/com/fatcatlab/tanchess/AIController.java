@@ -27,15 +27,16 @@ public class AIController {
 		public float defenceSpeed;
 		public float maxSpeed = 0;
 		public boolean usePowerUp = false;
+		public boolean isTargetLarge = false;
 		public ActionStruct(ChessmanSprite f, Vector2 t) {
 			this.from = f;
 			this.to = t;
 			maxSpeed = 0;
-			if (this.from.getScale() == ChessmanSprite.SMALL_SIZE) {
+			if (this.from.isSmall()) {
 				maxSpeed = MAX_S_SPEED;
-			} else if (this.from.getScale() == ChessmanSprite.LARGE_SIZE) {
+			} else if (this.from.isLarge()) {
 				maxSpeed = MAX_L_SPEED;
-			} else if (this.from.getScale() == ChessmanSprite.MEDIUM_SIZE) {
+			} else if (this.from.isMedium()) {
 				maxSpeed = MAX_M_SPEED;
 			}
 		}
@@ -65,7 +66,7 @@ public class AIController {
 		
 		protected void doMoveAction(ChessmanSprite from, Vector2 toPos, float speed) {
 			Vector2 fromPos = from.getPosition();
-			float distance = getDistance(fromPos, toPos);
+			float distance = fromPos.dst(toPos);
 			float coefficient = speed / distance;
 			Vector2 from2ToVec = new Vector2(toPos.x - fromPos.x, toPos.y - fromPos.y);
 			Vector2 impulse = new Vector2(coefficient * from2ToVec.x, coefficient * from2ToVec.y);
@@ -98,16 +99,14 @@ public class AIController {
 	private final int halfScreenWidth = StartActivity.CAMERA_WIDTH / 2;
 	private final int halfScreenHeight = StartActivity.CAMERA_HEIGHT / 2;
 	// hinge 's property
-	private final float hingeR = 19.0f;
+	private final float hingeHalfWidth = 19.0f;
+	private final float hingeHalfHeight = 2.0f;
 	private final Vector2 L_Hinge = new Vector2(halfScreenWidth - 75, halfScreenHeight );
 	private final Vector2 R_Hinge = new Vector2(halfScreenWidth + 75, halfScreenHeight );
 
 	private final float attack_speed_inaccuracy = 1.0f;
 	private final float defence_speed_inaccuracy = 0.01f;
 	private final float attack_distance_inaccuracy = 4.0f;
-	
-	//边界冗余 
-	private final int BorderRedundancy = 8 ; 
 	
 	private boolean canPowerUp = false;
 	private boolean canForbid = false;
@@ -160,14 +159,12 @@ public class AIController {
 	}
 
 	public void simulate() {
-		System.out.println("simulate");
 		this.fillPropState();
 		this.calculate();
 	}
 
 	protected void calculate() {
-		if(shouldCalculate())
-		{
+		if(shouldCalculate()) {
 			useProp();
 			// 所有的模拟计算要在完成prop动画后进行
 			// isShowingPropImage负责控制白色大图的显示
@@ -180,15 +177,15 @@ public class AIController {
 						checkLargeChessmanDefence();
 						if(!isLargestInDanger)
 						{
-							calculateDefence();
 							calculateAttack();
+							calculateDefence();		
 						}
 						doAction();
 						currentScene.unregisterUpdateHandler(pTimerHandler);
 					}
 				}
 			}));
-		}else{
+		} else {
 			ActionStruct as = new ActionStruct(this.chessmanInForbidMode, this.getLargestRivalChessman().getPosition());
 			as.actionType = ATTACK_ACTION;						
 			as.doAction();
@@ -197,8 +194,8 @@ public class AIController {
 	}
 	
 	protected boolean shouldCalculate(){
-		if( !isInForbidMode || (getLargestRivalSize()!= ChessmanSprite.LARGE_SIZE 
-				|| (this.chessmanInForbidMode == null) ))
+		if( !isInForbidMode || getLargestRivalSize()!= ChessmanSprite.LARGE_SIZE 
+				|| this.chessmanInForbidMode == null)
 			return true;
 		else if(this.chessmanInForbidMode.isDead == true)
 			return true;
@@ -238,18 +235,37 @@ public class AIController {
 			canPowerUp = false;
 	}
 	
+	protected boolean isInDanger(ChessmanSprite myChessman, Vector2 finalPos) {
+		boolean result = false;
+		for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
+			Integer key = (Integer) it.next();
+			ChessmanSprite rivalChessman = rivalChessmans.get(key);
+			if(rivalChessman.isDead)
+				continue;
+			if( checkBumpHingeWhenAttack(rivalChessman, myChessman) )
+				continue;
+			if (checkInLine(rivalChessman, myChessman, false))
+				continue;
+			if (canBounceOff(rivalChessman, myChessman, false)){
+				//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
+				result = true;
+			}
+		}
+		return result;
+	}
+	
 	protected boolean ForbidProcess(){
 		ChessmanSprite rivalChessman = getLargestRivalChessman();
 		if(rivalChessman == null)
 			return false;
-		if(rivalChessman.getScale() != ChessmanSprite.LARGE_SIZE)
+		if(!rivalChessman.isLarge())
 			return false;
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
-			if ( checkBumpHinge(myChessman, rivalChessman) )
+			if (checkBumpHingeWhenAttack(myChessman, rivalChessman))
 				continue;
-			if ( !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)){
+			if (!checkInLine(myChessman, rivalChessman, false)){
 				//如果打不出，并且加力也打不出，去判断是否两次打能够打出
 				if ( !canBounceOff(myChessman, rivalChessman, false) && !canBounceOff(myChessman, rivalChessman, true) ){
 					if ( canBounceOffTwoTimes(myChessman, rivalChessman) )
@@ -275,16 +291,16 @@ public class AIController {
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
-			if(chessman.getScale() == ChessmanSprite.MEDIUM_SIZE && ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
+			if(chessman.isMedium() && ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
 					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()))
 			{
 				workToDoOnEnlarge(chessman);
 				return true;
-			} else if(chessman.getScale() == ChessmanSprite.MEDIUM_SIZE && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
+			} else if(chessman.isMedium() && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
 					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && random(25)){
 				workToDoOnEnlarge(chessman);
 				return true;
-			} else if(chessman.getScale() == ChessmanSprite.SMALL_SIZE && (this.getLargestRivalSize() == ChessmanSprite.SMALL_SIZE)) {
+			} else if(chessman.isSmall() && (this.getLargestRivalSize() == ChessmanSprite.SMALL_SIZE)) {
 				if ( ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
 					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && random(50))
 				{
@@ -305,7 +321,7 @@ public class AIController {
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
-			if( chessman.getScale() == ChessmanSprite.LARGE_SIZE )
+			if(chessman.isLarge())
 			{
 				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
 						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition() )) 
@@ -321,7 +337,7 @@ public class AIController {
 					workToDoOnExchange(chessman);
 					return true;
 				}
-			}else if( chessman.getScale() == ChessmanSprite.MEDIUM_SIZE ){
+			}else if( chessman.isMedium()){
 				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
 						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) && this.random(20) ) 
 				{
@@ -405,78 +421,83 @@ public class AIController {
 	
 	protected void calculateAttack() {
 		for (Iterator<Integer> it = myChessmans.keySet().iterator(); it.hasNext();) {
+			// 遍历自己的棋子
 			Integer key = (Integer)it.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
 			if (myChessman.isDead)
 				continue;
 			for (Iterator<Integer> it2 = rivalChessmans.keySet().iterator(); it2.hasNext();) {
+				// 遍历对手的棋子
 				Integer key2 = (Integer) it2.next();
 				ChessmanSprite rivalChessman = rivalChessmans.get(key2);
 				if (rivalChessman.isDead)
 					continue;
-				boolean hitHinge = checkBumpHinge(myChessman, rivalChessman);
+				boolean hitHinge = checkBumpHingeWhenAttack(myChessman, rivalChessman);
 				if(hitHinge)
 					continue;
 				boolean canBounceOffWithoutPower = canBounceOff(myChessman, rivalChessman, false);
 				if (canBounceOffWithoutPower) {
-					//Log.d("CAN BOUNCE OFF", "can bounce off");
-					boolean hitOtherChessman = checkInLineWithoutPowerUp(myChessman, rivalChessman ,true);
+					boolean hitOtherChessman = checkInLine(myChessman, rivalChessman, true);
 					if (!hitOtherChessman) {
-						this.createActionStruct(myChessman, rivalChessman);
+						this.createAttackActionStruct(myChessman, rivalChessman);
 					}
-				}else if(this.canPowerUp && rivalChessman.getScale() != ChessmanSprite.SMALL_SIZE){
-					//TODO powerup的算法：
+				} else if(this.canPowerUp && !rivalChessman.isSmall()){
+					//TODO PowerUp的算法：
+					if(rivalChessman.isMedium() && this.usedProp != PropSprite.POWERUP)
+						// 如果当前选择使用的道具不是PowerUp并且目标棋子是中型棋子 跳出
+						continue;
 					boolean canBounceOffWithPower = canBounceOff(myChessman, rivalChessman, true);
-					if(canBounceOffWithPower){
-						boolean hitOtherChessman = checkInLineWithPowerUp(myChessman, rivalChessman, true);
-						if (!hitHinge && !hitOtherChessman) {
-							if(rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && this.random(80))
-							{
-								ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-								as.usePowerUp = true;
-							}else if(rivalChessman.getScale() == ChessmanSprite.MEDIUM_SIZE && this.usedProp == PropSprite.POWERUP){
-								ActionStruct as = this.createActionStruct(myChessman, rivalChessman);
-								as.usePowerUp = true;
-							}
+					if(canBounceOffWithPower) {
+						boolean hitOtherChessman = checkInLine(myChessman, rivalChessman, false);
+						if (!hitOtherChessman) {
+							// 改为一定创建action 但是在最后筛选
+							ActionStruct as = this.createAttackActionStruct(myChessman, rivalChessman);
+							as.usePowerUp = true;
 						}
 					}
 				}
-				
-				
 			}
 		}
 	}
 	
-	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
-		int myPoint = myChessman.calculateValue();
-		int rivalPoint = rivalChessman.calculateValue();
+	protected ActionStruct createAttackActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
+		int myPoint = myChessman.calculateAttackingValue();
+		int rivalPoint = rivalChessman.calculateAttackedValue();
 		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
+		if(this.player == Brain.PLAYER1 && rivalChessman.getPosition().y > this.halfScreenHeight
+				|| this.player == Brain.PLAYER2 && rivalChessman.getPosition().y < this.halfScreenHeight) {
+			rivalPoint *= 4;
+		}
 		ActionStruct as = new ActionStruct(myChessman, rivalChessman.getPosition());
+		if(rivalChessman.isLarge())
+			as.isTargetLarge = true;
 		as.actionType = ATTACK_ACTION;
-		as.point = myFinalPoint - myPoint + rivalPoint;
-		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
-		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
+		as.point = myFinalPoint - myPoint + rivalPoint * 5;
+		if(myChessman.isLarge() && isInDanger(myChessman, rivalChessman.getPosition()))
+			as.point -= 5000;
 		actionArray.add(as);
-		//Log.d("ATTACK POINT:", ""+as.point );
+		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:"+rivalChessman.chessmanID+" type:attack"+" double:false"
+				+" point:"+as.point);
 		return as;
 	}
 	
-	protected ActionStruct createActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman , ChessmanSprite _rivalChessman , boolean powerUp){
-		int myPoint = myChessman.calculateValue();
-		int rivalPoint1 = rivalChessman.calculateValue();
-		int rivalPoint2 = _rivalChessman.calculateValue();
-		int rivalPoint = (int) ((rivalPoint1+rivalPoint2) * 0.6f);
-		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
-		Vector2 attackPos = getMidpoint(rivalChessman.getPosition(), _rivalChessman.getPosition());
-		ActionStruct as = new ActionStruct(myChessman, attackPos );
+	protected ActionStruct createDoubleAttackActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman1, ChessmanSprite rivalChessman2){
+		int myPoint = myChessman.calculateAttackingValue();
+		int rivalPoint1 = rivalChessman1.calculateAttackedValue();
+		int rivalPoint2 = rivalChessman2.calculateAttackedValue();
+		int rivalPoint = (rivalPoint1 + rivalPoint2) * 2;
+		Vector2 attackPos = getMidpoint(rivalChessman1.getPosition(), rivalChessman2.getPosition());
+		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, attackPos);
+		ActionStruct as = new ActionStruct(myChessman, attackPos);
+		if(rivalChessman1.isLarge() || rivalChessman2.isLarge())
+			as.isTargetLarge = true;
 		as.actionType = ATTACK_ACTION;
-		as.point = myFinalPoint - myPoint + rivalPoint;
-		if(powerUp)
-			as.usePowerUp = true;
-		//Log.d("CAN BOUNCE OFF", "self:" + myChessman.chessmanID + " rival:" + rivalChessman.chessmanID
-		//		+ " myPoint:"+myPoint+" rivalPoint:"+rivalPoint+" myFinalPoint:"+myFinalPoint+" sumPoint:"+as.point);
+		as.point = myFinalPoint - myPoint + rivalPoint * 5;
+		if(myChessman.isLarge())
+			as.point -= 5000;
 		actionArray.add(as);
-		//Log.d("ATTACK POINT:", ""+as.point );
+		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:"+rivalChessman1.chessmanID+" type:attack"+" double:true"
+				+"point:"+as.point);
 		return as;
 	}
 	
@@ -489,13 +510,16 @@ public class AIController {
 		ActionStruct selectedAS = null;
 		for(Iterator<ActionStruct> it = actionArray.iterator(); it.hasNext();) {
 			ActionStruct as = (ActionStruct)(it.next()); 
-			//Log.d("CAN BOUNCE OFF", "type:"+as.actionType+" point"+as.point+" from:"+as.from.chessmanID);
+			if(as.isTargetLarge) {
+				// 如果目标是大子 一定攻击
+				selectedAS = as;
+				break;
+			}
 			if (as.point >= maxPoint) {
 				selectedAS = as;
 				maxPoint = as.point;
-			} 
+			}
 		}
-		//Log.d("CAN BOUNCE OFF", "decide!----self:" + selectedAS.from.chessmanID + " rival:" + toDo.to.chessmanID);
 		if(selectedAS.usePowerUp == true)
 		{
 			propAnimation(PropSprite.POWERUP);
@@ -542,7 +566,7 @@ public class AIController {
 	}
 
 	protected boolean canBounceOff(ChessmanSprite from, ChessmanSprite to , boolean powerUp) {
-		return canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), null , null, powerUp);
+		return canBounceOffBase(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), null , null, powerUp, to.isLarge());
 	}
 	
 	
@@ -553,14 +577,15 @@ public class AIController {
 	{
 		Vector2 fromFinalPos = new Vector2();
 		Vector2 toFinalPos = new Vector2();
-		canBounceOff(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false);
-		if(canBounceOff(fromFinalPos, toFinalPos, from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false)){
+		boolean isToLarge = to.isLarge();
+		canBounceOffBase(from.getPosition(), to.getPosition(), from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false, isToLarge);
+		if(canBounceOffBase(fromFinalPos, toFinalPos, from.getScale(), to.getScale(), fromFinalPos, toFinalPos, false, isToLarge)){
 			return true;
 		}
 		return false;
 	}
 	
-	protected boolean canBounceOff(Vector2 fromPos, Vector2 toPos, float fromSize , float toSize ,Vector2 fromFinalPos, Vector2 toFinalPos, boolean powerUp){
+	protected boolean canBounceOffBase(Vector2 fromPos, Vector2 toPos, float fromSize , float toSize ,Vector2 fromFinalPos, Vector2 toFinalPos, boolean powerUp, boolean isToLarge){
 		boolean result = false;
 		float impulse = 0;
 		float fromDamping = 0.0f;
@@ -587,7 +612,14 @@ public class AIController {
 			speed *= 1.4f;
 		float fromR = fromSize * 26;
 		float toR = toSize * 26;
-		float from2ToDistance = getDistance(fromPos, toPos);
+		float from2ToDistance = fromPos.dst(toPos);
+		// 对能否打出大子进行优化 
+		if(isToLarge) {
+			if(powerUp)
+				from2ToDistance += toR;
+			else
+				from2ToDistance += toR * 2;
+		}
 		float distance_in_box2d = (from2ToDistance - fromR - toR) / mPixelToMeterRatio;
 		float distance_try = 0.0f;
 		while (speed > attack_speed_inaccuracy && distance_in_box2d > distance_try) {
@@ -612,29 +644,14 @@ public class AIController {
 		}
 		return result;
 	}
-	
-
-	protected float getDistance(ChessmanSprite c1, ChessmanSprite c2) {
-		return (float) Math.sqrt((c2.getPosition().x - c1.getPosition().x)
-				* (c2.getPosition().x - c1.getPosition().x)
-				+ (c2.getPosition().y - c1.getPosition().y)
-				* (c2.getPosition().y - c1.getPosition().y));
-	}
-	
-	protected float getDistance(Vector2 v1, Vector2 v2) {
-		return (float) Math.sqrt((v2.x - v1.x)
-				* (v2.x - v1.x)
-				+ (v2.y - v1.y)
-				* (v2.y - v1.y));
-	}
 
 	protected float getMoveDistance(ChessmanSprite chessman, float v) {
 		float result = 0.0f;
-		if (chessman.getScale() == ChessmanSprite.LARGE_SIZE) {
+		if (chessman.isLarge()) {
 			result = (v * v) / (2 * this.L_LinearDamping / this.mass);
-		} else if (chessman.getScale() == ChessmanSprite.MEDIUM_SIZE) {
+		} else if (chessman.isMedium()) {
 			result = (v * v) / (2 * this.M_LinearDamping / this.mass);
-		} else if (chessman.getScale() == ChessmanSprite.SMALL_SIZE) {
+		} else if (chessman.isSmall()) {
 			result = (v * v) / (2 * this.S_LinearDamping / this.mass);
 		}
 		return result;
@@ -666,23 +683,30 @@ public class AIController {
 		y =  position.y + direction.y * distance;
 		return new Vector2(x,y);
 	}
+	
+	protected float getRealHingeR(ChessmanSprite from, ChessmanSprite to) {
+		float realhingeR = hingeHalfWidth;
+		float fromMinusHalfScreen = from.getPosition().y - from.getScale() * 26 - hingeHalfHeight - halfScreenHeight;
+		float toMinusHalfScreen = to.getPosition().y - to.getScale() * 26 - hingeHalfHeight - halfScreenHeight;
+		if(fromMinusHalfScreen * toMinusHalfScreen > 0)
+			realhingeR = hingeHalfHeight;
+		return realhingeR;
+	}
 
-	protected boolean checkBumpHinge(ChessmanSprite from, ChessmanSprite to) {
+	protected boolean checkBumpHingeWhenAttack(ChessmanSprite from, ChessmanSprite to) {
 		boolean result = true;
-		float from2ToDistance = getDistance(from, to);
-		float L_checkR = this.calculateNeededR(from, to, L_Hinge);
-		float R_checkR = this.calculateNeededR(from, to, R_Hinge);
-		
-		if ((checkChessmanInLine(from, to, L_Hinge, hingeR, L_checkR, from2ToDistance) == false)
-				&& (checkChessmanInLine(from, to, R_Hinge, hingeR , R_checkR , from2ToDistance) == false))
+		float from2ToDistance = from.getPosition().dst(to.getPosition());
+		float realhingeR = this.getRealHingeR(from, to);
+		if (!checkChessmanBetweenLine(from, to.getPosition(), L_Hinge, realhingeR, from2ToDistance)
+				&& !checkChessmanBetweenLine(from, to.getPosition(), R_Hinge, realhingeR, from2ToDistance))
 			result = false;
 		return result;
 	}
 	
 	protected boolean checkBumpHingeWhenDefence(ChessmanSprite from, Vector2 toPos){
-		float from2ToDistance = getDistance(from.getPosition(), toPos);
-		if((checkChessmanBetweenLine(from, toPos, L_Hinge, hingeR, from2ToDistance))  == false 
-				&& (checkChessmanBetweenLine(from, toPos, R_Hinge, hingeR , from2ToDistance) == false))
+		float from2ToDistance = from.getPosition().dst(toPos);
+		if((checkChessmanBetweenLine(from, toPos, L_Hinge, hingeHalfWidth, from2ToDistance))  == false 
+				&& (checkChessmanBetweenLine(from, toPos, R_Hinge, hingeHalfWidth , from2ToDistance) == false))
 			return false;
 		return true;
 	}
@@ -700,54 +724,48 @@ public class AIController {
 		return distance;
 	}
 	
-	protected boolean checkInLineWithPowerUp(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy){
-		return checkInLineBase(from, to, shouldConcernAboutRedundancy, true);
+	protected boolean checkInLine(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutDouble){
+		return checkInLineBase(from, to, null, shouldConcernAboutDouble);
 	}
 	
-	protected boolean checkInLineWithoutPowerUp(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy){
-		return checkInLineBase(from, to, shouldConcernAboutRedundancy, false);
+	protected boolean checkInLineWithException(ChessmanSprite from, ChessmanSprite to, ChessmanSprite exception, boolean shouldConcernAboutDouble){
+		return checkInLineBase(from, to, exception, shouldConcernAboutDouble);
 	}
 
 	/*
-	 * shouldConcernAboutRedundancy为true的时候去计算靠近边沿可以打的情况。不然不考虑
+	 * shouldConcernAboutDouble为true的时候去计算靠近边沿可以打的情况。不然不考虑
 	 */
-	protected boolean checkInLineBase(ChessmanSprite from, ChessmanSprite to, boolean shouldConcernAboutRedundancy, boolean powerUp) {
-		float from2ToDistance = this.getDistance(from, to);
+	protected boolean checkInLineBase(ChessmanSprite from, ChessmanSprite to, ChessmanSprite exception, boolean shouldConcernAboutDouble) {
+		float from2ToDistance = from.getPosition().dst(to.getPosition());
 		for (Iterator<Integer> it = allChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
 			ChessmanSprite current = allChessmans.get(key);
 			if(current.isDead)
 				continue;
-			if (current != from && current != to) {
+			if (current != from && current != to && current != exception) {
 				Vector2 currentPosition = current.getPosition();
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
-				if( this.checkChessmanInLine(from, to, currentPosition, currentR, checkR , from2ToDistance )) {
-					//调整。如果to和current距离比较近并且都在边沿。可以考虑打出去。to和from必须都为对方的子
-					if(( getDistance(to, current) - attack_distance_inaccuracy < ( from.getScale() * 2 + to.getScale() + current.getScale() )*26 ) 
-							&& shouldConcernAboutRedundancy && to.getGroup() != this.player && current.getGroup() != this.player )
-					{
-						if ( isNearBorder(to , BorderRedundancy) || isNearBorder(current, BorderRedundancy ))
-						{
-							boolean shouldCreateActionStruct = true;
-							//TODO 遍历其他的棋子。判断是否在之间，是否有挡着
-							for( Iterator<Integer> iter = allChessmans.keySet().iterator() ; iter.hasNext(); ){
-								Integer key2 = (Integer) iter.next();
-								ChessmanSprite check = allChessmans.get(key2);
-								if( !check.isDead || check ==from || check == to || check == current)
-									continue;
-								Vector2 toPoint = getMidpoint(to.getPosition(), current.getPosition());
-								float distance = getDistance(from.getPosition(), toPoint);
-								if( checkChessmanBetweenLine(from, toPoint , check.getPosition() , currentR, distance))
-								{
-									shouldCreateActionStruct = false;
-									break;
-								}
-							}
-							if(shouldCreateActionStruct)
+				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR, from2ToDistance)) {
+					// 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去。to和from必须都为对方的子
+					if(shouldConcernAboutDouble) {
+						boolean isToAndCurrentCloseEnough =  to.getPosition().dst(currentPosition) - attack_distance_inaccuracy < (from.getScale() * 2 + to.getScale() + current.getScale() ) * 26; 
+						boolean isToAndCurrentBothRival = to.getGroup() != this.player && current.getGroup() != this.player;
+						boolean isToAndCurrentBothNearBorder = isNearBorder(to , to.getScale() * 26 * 2) && isNearBorder(current, current.getScale() * 26 * 2);
+						/*if(from.chessmanID == 28) {
+							Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" isToAndCurrentCloseEnough:"
+									+isToAndCurrentCloseEnough+" isToAndCurrentBothRival:"+isToAndCurrentBothRival+" isToAndCurrentBothNearBorder:"+isToAndCurrentBothNearBorder);
+						}*/
+						if (isToAndCurrentCloseEnough && isToAndCurrentBothRival && isToAndCurrentBothNearBorder) {
+							boolean existChessmanBetweenFromAndCurrent = this.checkInLineWithException(from, current, to, false);
+							boolean existChessmanBetweenFromAndTo = this.checkInLineWithException(from, to, current, false);
+							/*if(from.chessmanID == 28) {
+								Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" existChessmanBetweenFromAndCurrent:"
+										+existChessmanBetweenFromAndCurrent+" existChessmanBetweenFromAndTo:"+existChessmanBetweenFromAndTo);
+							}*/
+							if(!existChessmanBetweenFromAndCurrent && !existChessmanBetweenFromAndTo)
 							{
-								//create the structure
-								this.createActionStruct( from, to ,current ,powerUp);
+								this.createDoubleAttackActionStruct(from, to, current);
 							}
 						}
 					}
@@ -826,14 +844,14 @@ public class AIController {
 	}
 	
 	protected float calculateSpeed(ChessmanSprite chessman, Vector2 toPos) {
-		float from2ToDistance = getDistance(chessman.getPosition(), toPos);
+		float from2ToDistance = chessman.getPosition().dst(toPos);
 		float distance_in_box2d = from2ToDistance / mPixelToMeterRatio;
 		float fromDamping = 0.0f;
-		if (chessman.getScale() == ChessmanSprite.SMALL_SIZE) {
+		if (chessman.isSmall()) {
 			fromDamping = this.S_LinearDamping;
-		} else if (chessman.getScale() == ChessmanSprite.LARGE_SIZE) {
+		} else if (chessman.isLarge()) {
 			fromDamping = this.L_LinearDamping;
-		} else if (chessman.getScale() == ChessmanSprite.MEDIUM_SIZE) {
+		} else if (chessman.isMedium()) {
 			fromDamping = this.M_LinearDamping;
 		}
 		float speed = this.calculateSpeedHelp(distance_in_box2d, fromDamping);
@@ -846,27 +864,23 @@ public class AIController {
 	
 	protected boolean LargeChessmanBeatBack(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
 		//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
-		if( !checkBumpHinge(myChessman, rivalChessman) && !checkInLineWithoutPowerUp(myChessman, rivalChessman, false)){
+		if( !checkBumpHingeWhenAttack(myChessman, rivalChessman) && !checkInLine(myChessman, rivalChessman, false)){
 			if (canBounceOff(myChessman, rivalChessman, false))
 			{
 				if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-					ActionStruct as = createActionStruct(myChessman, rivalChessman);
-					actionArray.add(as);
+					createAttackActionStruct(myChessman, rivalChessman);
 					return true;
 				}else if(random(10) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-					ActionStruct as = createActionStruct(myChessman, rivalChessman);
-					actionArray.add(as);
+					createAttackActionStruct(myChessman, rivalChessman);
 					return true;
 				}
 			}
 			else if( canBounceOff(myChessman, rivalChessman, true) && rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE ){
 				if (ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-					ActionStruct as = createActionStruct(myChessman, rivalChessman);
-					actionArray.add(as);
+					createAttackActionStruct(myChessman, rivalChessman);
 					return true;
 				}else if(random(50) && ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, rivalChessman.getPosition())){
-					ActionStruct as = createActionStruct(myChessman, rivalChessman);
-					actionArray.add(as);
+					createAttackActionStruct(myChessman, rivalChessman);
 					return true;
 				}
 			}
@@ -884,12 +898,14 @@ public class AIController {
 		}
 		for(int i = 0 ; i < largestList.size() ; i++){
 			ChessmanSprite myChessman = largestList.get(i);
-			for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
+			for(Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
 				Integer key = (Integer) it.next();
 				ChessmanSprite rivalChessman = rivalChessmans.get(key);
-				if( checkBumpHinge(rivalChessman, myChessman) )
+				if(rivalChessman.isDead)
 					continue;
-				if (checkInLineWithoutPowerUp(rivalChessman, myChessman, false))
+				if( checkBumpHingeWhenAttack(rivalChessman, myChessman) )
+					continue;
+				if (checkInLine(rivalChessman, myChessman, false))
 					continue;
 				if (canBounceOff(rivalChessman, myChessman, false)){
 					//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
@@ -897,14 +913,13 @@ public class AIController {
 						calculateChessmanDefence(myChessman);
 				}
 				else if (canBounceOff(rivalChessman, myChessman, true)){
-					//如果自己只有唯一一个大子了，则必须考虑，有2个或者以上大子的话则20的概率去考虑
-					if( largestList.size() < 1 || random(20))
+					//如果自己只有唯一一个大子了，则必须考虑，有2个或者以上大子的话则50的概率去考虑
+					if( largestList.size() <= 1 || random(50))
 						if ( !LargeChessmanBeatBack(myChessman,rivalChessman))
 							calculateChessmanDefence(myChessman);
 				}
 			}
 		}
-		
 		if(actionArray.size() != 0)
 			this.isLargestInDanger = true;
 		else
@@ -937,18 +952,19 @@ public class AIController {
 		}
 		ActionStruct as = new ActionStruct(myChessman, destinationVector);
 		as.defenceSpeed = this.calculateSpeed(myChessman, destinationVector);
-		as.point = ChessmanSprite.calculateValue(myChessman.value, bestPos) - myChessman.calculateValue();
-		as.point *= 0.1f;
+		as.point = myChessman.calculateDefenceValue(bestPos) - myChessman.calculateDefenceValue();
 		as.actionType = DEFENCE_ACTION;
 		if(as.defenceSpeed > as.maxSpeed)
+			// 这个数值需要大于棋子在hinge之间滑动的point(目前是0)
 			as.point = 1;
 		if(willHitHinge) 
 			as.point -= 10000;
 		if(willHitOtherChess)
-			as.point -= 500;
-		if(myChessman.getScale() == ChessmanSprite.SMALL_SIZE)
+			as.point -= 1000;
+		if(myChessman.isSmall())
 			as.point -= 5000;
-		//Log.d("DEFENCE POINT:", ""+as.point );
+		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:bestPos"+" type:defence"+" double:false"
+				+"point:"+as.point);
 		actionArray.add(as);
 	}
 	
@@ -981,9 +997,9 @@ public class AIController {
 		Vector2 toPos = null;
 		float selectedR = current.getScale() * 26;
 		if(moveToLeftMiddle)
-			toPos = new Vector2(this.L_Hinge.x + this.hingeR + selectedR, this.halfScreenHeight);
+			toPos = new Vector2(this.L_Hinge.x + this.hingeHalfWidth + selectedR, this.halfScreenHeight);
 		else
-			toPos = new Vector2(this.R_Hinge.x - this.hingeR - selectedR, this.halfScreenHeight);
+			toPos = new Vector2(this.R_Hinge.x - this.hingeHalfWidth - selectedR, this.halfScreenHeight);
 		return toPos;
 	}
 	
@@ -1019,13 +1035,13 @@ public class AIController {
 	}
 	
 	/*
-	 * 是否已经靠近边缘了，redundancy 可以修改 
+	 * 是否已经靠近边缘了，nearDistance可以修改 
 	 */
-	protected boolean isNearBorder(ChessmanSprite chessman , int Redundancy){
+	protected boolean isNearBorder(ChessmanSprite chessman , float nearDistance){
 		float x = chessman.getPosition().x;
 		float y = chessman.getPosition().y;
-		if( ChessmanSprite.checkAlive( x , y ) ){
-			if (!ChessmanSprite.checkAlive(x-Redundancy, y -Redundancy) || !ChessmanSprite.checkAlive(x+Redundancy, y+Redundancy)){
+		if( ChessmanSprite.checkAlive( x , y ) ) {
+			if (!ChessmanSprite.checkAlive(x-nearDistance, y-nearDistance) || !ChessmanSprite.checkAlive(x+nearDistance, y+nearDistance)){
 				return true;
 			}
 		}
@@ -1089,7 +1105,7 @@ public class AIController {
 		List<ChessmanSprite> _largest = new LinkedList<ChessmanSprite>();
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = iter.next();
-			if(myChessmans.get(key).getScale() == ChessmanSprite.LARGE_SIZE)
+			if(myChessmans.get(key).isLarge())
 			{
 				_largest.add(myChessmans.get(key));
 			}
@@ -1109,7 +1125,7 @@ public class AIController {
 		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
-		else if(randomNumber < 95 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE)) {
+		else if(randomNumber < 90 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE)) {
 			decidedPropToUse = PropSprite.ENLARGE;
 		}
 		else {

@@ -240,7 +240,7 @@ public class GameScene extends AbstractGameScene {
 				if(!mBrain.checkGameOver()) {
 					checkTurn();
 				}
-				if (mBrain.isGameOver == true)
+				if (mBrain.isGameOver)
 					unregisterUpdateHandler(pTimerHandler);			
 			}
 		}));
@@ -546,7 +546,7 @@ public class GameScene extends AbstractGameScene {
     public void showWinSprite(boolean group, boolean even) {
 		StartActivity.Instance.mSound.winSound.play();
     	
-		this.registerUpdateHandler(new TimerHandler(5f, true,
+		this.registerUpdateHandler(new TimerHandler(3f, true,
 				new ITimerCallback() {
 					@Override
 					public void onTimePassed(final TimerHandler pTimerHandler) {

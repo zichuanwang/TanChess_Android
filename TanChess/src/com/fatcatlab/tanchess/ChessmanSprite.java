@@ -40,7 +40,7 @@ public class ChessmanSprite extends Sprite {
 	
 	private static final int LARGE_CHESSMAN_VALUE = 8;
 	private static final int MEDIUM_CHESSMAN_VALUE = 4;
-	private static final int SMALL_CHESSMAN_VALUE = 2;
+	//private static final int SMALL_CHESSMAN_VALUE = 2;
 
 	public boolean isDead = false;
 	public boolean isForbad = true;
@@ -295,7 +295,7 @@ public class ChessmanSprite extends Sprite {
 	}
 	
 	public static int calculateValue(int value, Vector2 pos) {
-		int result = ChessmanSprite.getRealValue(value);
+		int result = value;
 		if(ChessmanSprite.checkInZone(HIGH_SAFETY_ZONE_WIDTH, HIGH_SAFETY_ZONE_HEIGHT, pos)) {
 			result *= ChessmanSprite.HIGH_SAFETY_COEFFICIENT;
 		}
@@ -308,23 +308,41 @@ public class ChessmanSprite extends Sprite {
 		return result;
 	}
 	
-	/*
-	 * If large = 12 if normal = 4 if small = 0
-	 */
-	private static int getRealValue(int value) {
-		int realValue = value;
-		if(value == ChessmanSprite.SMALL_CHESSMAN_VALUE) {
-			realValue = 1;
-		}
-		else if(value == ChessmanSprite.LARGE_CHESSMAN_VALUE) {
-			realValue *= 3;
-			realValue /= 2;
-		}
-		return realValue;
+	public int calculateAttackedValue() {
+		int realValue = 0;
+		if(this.isLarge())
+			realValue = 48;
+		else if(this.isMedium()) 
+			realValue = 16;
+		else if(this.isSmall())
+			realValue = 4;
+		return ChessmanSprite.calculateValue(realValue, this.getPosition());
 	}
 	
-	public int calculateValue() {
-		return ChessmanSprite.calculateValue(this.value, this.getPosition());
+	public int calculateAttackingValue() {
+		int realValue = 0;
+		if(this.isLarge())
+			realValue = 10;
+		else if(this.isMedium()) 
+			realValue = 4;
+		else if(this.isSmall())
+			realValue = 0;
+		return ChessmanSprite.calculateValue(realValue, this.getPosition());
+	}
+	
+	public int calculateDefenceValue() {
+		return calculateDefenceValue(this.getPosition());
+	}
+	
+	public int calculateDefenceValue(Vector2 pos) {
+		int realValue = 0;
+		if(this.isLarge())
+			realValue = 8;
+		else if(this.isMedium()) 
+			realValue = 4;
+		else if(this.isSmall())
+			realValue = 1;
+		return ChessmanSprite.calculateValue(realValue, pos);
 	}
 	
 	public boolean checkAlive() {
@@ -468,6 +486,18 @@ public class ChessmanSprite extends Sprite {
 	protected void workToDoOnEnlarge(int id)
 	{
 		
+	}
+	
+	public boolean isLarge() {
+		return this.getScale() == ChessmanSprite.LARGE_SIZE;
+	}
+	
+	public boolean isMedium() {
+		return this.getScale() == ChessmanSprite.MEDIUM_SIZE;
+	}
+	
+	public boolean isSmall() {
+		return this.getScale() == ChessmanSprite.SMALL_SIZE;
 	}
 
 }
