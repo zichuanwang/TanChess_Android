@@ -207,6 +207,9 @@ public class AIController {
 		if(this.usedProp == -1) {
 			this.usedProp = createUseProp();
 		}
+		if(usedProp == PropSprite.FORBID && !this.getLargestRivalChessman().isLarge()) {
+			this.usedProp = createUseProp();
+		}
 		if(canForbid == true && this.usedProp == PropSprite.FORBID)
 		{
 			if( ForbidProcess() )
