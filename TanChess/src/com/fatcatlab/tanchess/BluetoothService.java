@@ -509,7 +509,7 @@ public class BluetoothService {
 					bytes = mmInStream.read(buffer);
 
 					String bufString = new String(buffer);
-					Log.d("ÊÕµ½", bufString);
+					Log.d("ï¿½Õµï¿½", bufString);
 					
 					Object object = BluetoothService.getService().ByteToObject(buffer);
 					BTMessage msg = (BTMessage)object;
@@ -543,7 +543,6 @@ public class BluetoothService {
 		public void write(byte[] buffer) {
 			try {
 				mmOutStream.write(buffer);
-
 				// Share the sent message back to the UI Activity
 				mHandler.obtainMessage(BTGameScene.MESSAGE_WRITE, -1, -1,
 						buffer).sendToTarget();

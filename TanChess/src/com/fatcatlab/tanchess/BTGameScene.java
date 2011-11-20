@@ -182,6 +182,12 @@ public class BTGameScene extends GameScene {
 			this.rivalHaschangeTurn = true;
 			break;
 		}
+		case QUIT_GAME:{
+			StartActivity.SCENE_STATE = StartActivity.STATE_MAINSCENE;
+			StartActivity.Instance.reloadMainScene();
+			BluetoothService.getService().stop();
+			break;
+		}
 		}
 	}
 
