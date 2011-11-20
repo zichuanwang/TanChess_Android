@@ -688,8 +688,20 @@ public class AIController {
 	
 	protected float getRealHingeR(ChessmanSprite from, ChessmanSprite to) {
 		float realhingeR = hingeHalfWidth;
-		float fromMinusHalfScreen = from.getPosition().y - from.getScale() * 26 - hingeHalfHeight - halfScreenHeight;
-		float toMinusHalfScreen = to.getPosition().y - to.getScale() * 26 - hingeHalfHeight - halfScreenHeight;
+		float fromMinusHalfScreen = from.getPosition().y - halfScreenHeight;
+		if(fromMinusHalfScreen > 0) {
+			fromMinusHalfScreen -= from.getScale() * 26 + hingeHalfHeight;
+		}
+		else {
+			fromMinusHalfScreen += from.getScale() * 26 + hingeHalfHeight;
+		}
+		float toMinusHalfScreen = to.getPosition().y - halfScreenHeight;
+		if(toMinusHalfScreen > 0) {
+			toMinusHalfScreen -= to.getScale() * 26 + hingeHalfHeight;
+		}
+		else {
+			toMinusHalfScreen += to.getScale() * 26 + hingeHalfHeight;
+		}
 		if(fromMinusHalfScreen * toMinusHalfScreen > 0)
 			realhingeR = hingeHalfHeight;
 		return realhingeR;
@@ -701,17 +713,9 @@ public class AIController {
 		float realhingeR = this.getRealHingeR(from, to);
 		float L_HingeR = this.calculateNeededR(from, to, L_Hinge);
 		float R_HingeR = this.calculateNeededR(from, to, R_Hinge);
-		if(Math.abs(from.getPosition().y - this.halfScreenHeight) > from.getScale() * 26 + this.hingeHalfHeight
-				&& Math.abs(to.getPosition().y - this.halfScreenHeight) > to.getScale() * 26 + this.hingeHalfHeight) {
-			if (!checkChessmanBetweenLine(from, to.getPosition(), L_Hinge, realhingeR, from2ToDistance)
-					&& !checkChessmanBetweenLine(from, to.getPosition(), R_Hinge, realhingeR, from2ToDistance))
-				result = false;
-		}
-		else {
-			if (!checkChessmanInLine(from, to.getPosition(), L_Hinge, realhingeR, L_HingeR, from2ToDistance)
-					&& !checkChessmanInLine(from, to.getPosition(), R_Hinge, realhingeR, R_HingeR, from2ToDistance))
-				result = false;
-		}
+		if (!checkChessmanInLine(from, to.getPosition(), L_Hinge, realhingeR, L_HingeR, from2ToDistance)
+				&& !checkChessmanInLine(from, to.getPosition(), R_Hinge, realhingeR, R_HingeR, from2ToDistance))
+			result = false;
 		return result;
 	}
 	
