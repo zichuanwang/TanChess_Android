@@ -266,6 +266,8 @@ public class AIController {
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext(); ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
+			if(myChessman.isDead)
+				continue;
 			if (checkBumpHingeWhenAttack(myChessman, rivalChessman))
 				continue;
 			if (!checkInLine(myChessman, rivalChessman, false)){
@@ -291,33 +293,43 @@ public class AIController {
 	}
 	
 	protected boolean EnlargeProcess(){
+		ChessmanSprite bestChoice = this.getBestNotLargeChessman(myChessmans);
+		workToDoOnEnlarge(bestChoice);
+		return true;
+	}
+	
+	protected ChessmanSprite getBestNotLargeChessman(Hashtable<Integer, ChessmanSprite> array) {
 		ChessmanSprite bestChoice = null;
-		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
+		for(Iterator<Integer> iter = array.keySet().iterator() ; iter.hasNext();){
 			Integer key = (Integer)iter.next();
-			ChessmanSprite chessman = myChessmans.get(key);
+			ChessmanSprite chessman = array.get(key);
+			if(chessman.isDead)
+				continue;
 			if(bestChoice == null) {
 				bestChoice = chessman;
 				continue;
 			}
+			if(chessman.isLarge()) 
+				continue;
 			if(chessman.isMedium() && bestChoice.isSmall()) {
 				bestChoice = chessman;
 				continue;
 			}
 			if(chessman.isSmall() && bestChoice.isMedium())
 				continue;
-			if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition())) {
+			if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
+					ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) ) {
 				bestChoice = chessman;
-			} else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
-					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition())){
-				if(!ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH,
-						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, bestChoice.getPosition())) {
+			}
+			else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
+					ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) )  {
+				if(!ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
+						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, bestChoice.getPosition()) ) {
 					bestChoice = chessman;
 				}
 			}
 		}
-		workToDoOnEnlarge(bestChoice);
-		return true;
+		return bestChoice;
 	}
 	
 	protected ChessmanSprite getBestRivalChessman() {
@@ -325,29 +337,7 @@ public class AIController {
 		if(this.getLargestRivalChessman().isLarge() || rivalChessmans.size() <= 1) {
 			return largestRival;
 		}
-		ChessmanSprite bestChoice = null;
-		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
-			Integer key = (Integer)iter.next();
-			ChessmanSprite chessman = rivalChessmans.get(key);
-			if(bestChoice == null) {
-				bestChoice = chessman;
-				continue;
-			}
-			if(chessman.isMedium()){
-				if(ChessmanSprite.checkInZone(ChessmanSprite.HIGH_SAFETY_ZONE_WIDTH, 
-						ChessmanSprite.HIGH_SAFETY_ZONE_HEIGHT, chessman.getPosition()) ) {
-					bestChoice = chessman;
-				}
-				else if(ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
-						ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, chessman.getPosition()) )  {
-					if(!ChessmanSprite.checkInZone(ChessmanSprite.NORMAL_SAFETY_ZONE_WIDTH, 
-							ChessmanSprite.NORMAL_SAFETY_ZONE_HEIGHT, bestChoice.getPosition()) ) {
-						bestChoice = chessman;
-					}
-				}
-			}
-		}
-		return bestChoice;
+		return this.getBestNotLargeChessman(this.rivalChessmans);
 	}
 	
 	protected boolean ExchangeProcess(){
@@ -1183,11 +1173,15 @@ public class AIController {
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = myChessmans.get(key);
+			if(chessman.isDead)
+				continue;
 			result += chessman.value;
 		}
 		for(Iterator<Integer> iter = rivalChessmans.keySet().iterator() ; iter.hasNext() ; ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite chessman = rivalChessmans.get(key);
+			if(chessman.isDead)
+				continue;
 			result += chessman.value/2;
 		}
 		return result;
