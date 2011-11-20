@@ -240,20 +240,23 @@ public class AIController {
 	
 	protected boolean isInDanger(ChessmanSprite myChessman, Vector2 finalPos) {
 		boolean result = false;
+		Vector2 currentPosition = myChessman.getPosition();
+		myChessman.setPosition(finalPos.x, finalPos.y);
 		for (Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
 			Integer key = (Integer) it.next();
 			ChessmanSprite rivalChessman = rivalChessmans.get(key);
 			if(rivalChessman.isDead)
 				continue;
-			if( checkBumpHingeWhenAttack(rivalChessman, myChessman) )
+			if(checkBumpHingeWhenAttack(rivalChessman, myChessman))
 				continue;
 			if (checkInLine(rivalChessman, myChessman, false))
 				continue;
 			if (canBounceOff(rivalChessman, myChessman, false)){
-				//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
+				// 如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
 				result = true;
 			}
 		}
+		myChessman.setPosition(currentPosition.x, currentPosition.y);
 		return result;
 	}
 	
