@@ -141,7 +141,6 @@ public class BluetoothControlActivity extends Activity {
 				findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 				mPairedDevicesArrayAdapter.add(device.getName() + "\n"
 						+ device.getAddress());
-				Toast.makeText(BluetoothControlActivity.this, "这是什么，我这里是乱码", Toast.LENGTH_SHORT).show();
 			}
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired)
@@ -187,7 +186,10 @@ public class BluetoothControlActivity extends Activity {
 			BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
 			// Attempt to connect to the device
 			if(device.getBondState() == BluetoothDevice.BOND_BONDED)
+			{
 				BluetoothService.getService().connect(device);
+				Toast.makeText(BluetoothControlActivity.this, "Connecting...", Toast.LENGTH_SHORT).show();
+			}
 			else if (device.getBondState() == BluetoothDevice.BOND_NONE) {
                 try {
 					BluetoothControlActivity.createBond(device.getClass(), device);
@@ -255,7 +257,7 @@ public class BluetoothControlActivity extends Activity {
 		super.onDestroy();
 	}
 	
-	static public boolean createBond(Class btClass,BluetoothDevice btDevice) throws Exception {    
+	static public boolean createBond(Class<? extends BluetoothDevice> btClass,BluetoothDevice btDevice) throws Exception {    
 	    Method createBondMethod = btClass.getMethod("createBond");    
 	    Boolean returnValue = (Boolean) createBondMethod.invoke(btDevice);    
 	    return returnValue.booleanValue();    
