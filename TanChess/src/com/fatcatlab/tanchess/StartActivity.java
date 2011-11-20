@@ -9,6 +9,8 @@ import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.util.FPSLogger;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 
+import com.fatcatlab.tanchess.BTMessage.PacketCodes;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -127,8 +129,11 @@ public class StartActivity extends BaseGameActivity {
 				this.reloadMainScene();
 				break;
 			case STATE_BTGAMESCENE:
-				BluetoothService.getService().stop();
+				BTMessage message = new BTMessage();
+				message.packetCodes = PacketCodes.QUIT_GAME;
+				this.mMainScene.mBtGameScene.sendMessage(message);
 				this.reloadMainScene();
+				BluetoothService.getService().stop();
 				break;
 			case STATE_AIGAME:
 				this.reloadMainScene();
@@ -153,16 +158,6 @@ public class StartActivity extends BaseGameActivity {
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
-		Log.d("resume", "!!!!!!");
-		//if(StartActivity.SCENE_STATE == StartActivity.STATE_BTGAMESCENE)
-		{
-			//this.reloadGameScene();
-			//this.onLoadScene();
-			//StartActivity.Instance.mEngine.clearUpdateHandlers();
-			//mMainScene = new MainScene(1, mEngine);
-			//mMainScene.workToDoOnLoad();
-			//StartActivity.Instance.mMainScene.mBtGameScene.onLoadScene();
-		}
 		super.onResume();
 	}
 
@@ -175,34 +170,22 @@ public class StartActivity extends BaseGameActivity {
             case BTGameScene.MESSAGE_STATE_CHANGE:
                 switch (msg.arg1) {
                 case BluetoothService.STATE_CONNECTED:
-            	Log.d("BT_STATE_CHANGE", "CONNECTED");
                     break;
                 case BluetoothService.STATE_CONNECTING:
-            	Log.d("BT_STATE_CHANGE", "CONNECTING");
                     break;
                 case BluetoothService.STATE_LISTEN:
-            	Log.d("BT_STATE_CHANGE", "LISTEN");
                 	break;
                 case BluetoothService.STATE_NONE:
-            	Log.d("BT_STATE_CHANGE", "NONE");
                     break;
                 }
                 break;
             case BTGameScene.MESSAGE_WRITE:
-                //byte[] writeBuf = (byte[]) msg.obj;
-                // construct a string from the buffer
-                //String writeMessage = new String(writeBuf);
                 break;
             case BTGameScene.MESSAGE_READ:
                 BTMessage message = (BTMessage) msg.obj;
-                // construct a string from the valid bytes in the buffer
-                //String readMessage = new String(readBuf, 0, msg.arg1);
-                //StartActivity.Instance.getmMainScene().mBtGameScene.handleString(readMessage);
-                Log.d("BT", "start activity receive message");
                 StartActivity.Instance.getmMainScene().mBtGameScene.HandleMessage(message);
                 break;
             case BTGameScene.MESSAGE_DEVICE_NAME:
-                // save the connected device's name
                 break;
             }
         }
