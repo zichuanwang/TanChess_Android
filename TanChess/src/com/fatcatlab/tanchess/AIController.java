@@ -270,7 +270,15 @@ public class AIController {
 		if(rivalChessman == null)
 			return false;
 		if(!rivalChessman.isLarge())
+		{
+			//当棋子少于6个的时候用加力随机两下
+			if( rivalChessmans.size() < 6 && random(50))
+			{
+				workToDoOnForbid();
+				return true;
+			}
 			return false;
+		}
 		for(Iterator<Integer> iter = myChessmans.keySet().iterator() ; iter.hasNext(); ){
 			Integer key = (Integer)iter.next();
 			ChessmanSprite myChessman = myChessmans.get(key);
@@ -447,7 +455,6 @@ public class AIController {
 						this.createAttackActionStruct(myChessman, rivalChessman);
 					}
 				} else if(this.canPowerUp && !rivalChessman.isSmall()){
-					//TODO PowerUp的算法：
 					if(rivalChessman.isMedium() && this.usedProp != PropSprite.POWERUP)
 						// 如果当前选择使用的道具不是PowerUp并且目标棋子是中型棋子 跳出
 						if(rivalChessmans.size() > 1)
@@ -775,7 +782,7 @@ public class AIController {
 				// 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去。to和from必须都为对方的子
 				if(shouldConcernAboutDouble) {
 					boolean isToAndCurrentCloseEnough =  to.getPosition().dst(currentPosition) - attack_distance_inaccuracy < (from.getScale() * 2 + to.getScale() + current.getScale() ) * 26; 
-					boolean isToAndCurrentBothRival = to.getGroup() != this.player && current.getGroup() != this.player;
+					boolean isToAndCurrentBothRival = (to.getGroup() != this.player) && (current.getGroup() != this.player);
 					boolean isToAndCurrentBothNearBorder = isNearBorder(to, to.getScale() * 26) && isNearBorder(current, current.getScale() * 26);
 					/*if(from.chessmanID == 28) {
 						Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" isToAndCurrentCloseEnough:"
@@ -1151,7 +1158,7 @@ public class AIController {
 				&& (getLargestRivalSize() != ChessmanSprite.LARGE_SIZE || (rivalChessmans.size() < 3 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE) )) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
-		else if(randomNumber < 90 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
+		else if(randomNumber < 85 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
 				&& !(myChessmans.size() == 1 && this.getLargestMyChessman().size() != 0)) {
 			decidedPropToUse = PropSprite.ENLARGE;
 		}
