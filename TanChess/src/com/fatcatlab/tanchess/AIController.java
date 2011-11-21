@@ -212,7 +212,7 @@ public class AIController {
 		}
 		if(canForbid == true && this.usedProp == PropSprite.FORBID)
 		{
-			if( ForbidProcess() )
+			if(ForbidProcess())
 			{
 				this.usedProp = createUseProp();
 				mPlayerValue -= PropSprite.FORBID_NEED_SCORE;
@@ -236,6 +236,11 @@ public class AIController {
 		}
 		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
 			canPowerUp = false;
+		
+		// 如果对方剩余棋子小于等于3 只使用powerup道具
+		if(this.rivalChessmans.size() <= 3) {
+			this.usedProp = PropSprite.POWERUP;
+		}
 	}
 	
 	protected boolean isInDanger(ChessmanSprite myChessman, Vector2 finalPos) {
@@ -689,21 +694,26 @@ public class AIController {
 	protected float getRealHingeR(ChessmanSprite from, ChessmanSprite to) {
 		float realhingeR = hingeHalfWidth;
 		float fromMinusHalfScreen = from.getPosition().y - halfScreenHeight;
+		float toMinusHalfScreen = to.getPosition().y - halfScreenHeight;
+		if(fromMinusHalfScreen * toMinusHalfScreen < 0)
+			return hingeHalfWidth;
 		if(fromMinusHalfScreen > 0) {
 			fromMinusHalfScreen -= from.getScale() * 26 + hingeHalfHeight;
 		}
 		else {
 			fromMinusHalfScreen += from.getScale() * 26 + hingeHalfHeight;
 		}
-		float toMinusHalfScreen = to.getPosition().y - halfScreenHeight;
+		
 		if(toMinusHalfScreen > 0) {
 			toMinusHalfScreen -= to.getScale() * 26 + hingeHalfHeight;
 		}
 		else {
 			toMinusHalfScreen += to.getScale() * 26 + hingeHalfHeight;
 		}
-		if(fromMinusHalfScreen * toMinusHalfScreen > 0)
-			realhingeR = hingeHalfHeight;
+		if(fromMinusHalfScreen * toMinusHalfScreen > 0) {
+			if(Math.abs(fromMinusHalfScreen - toMinusHalfScreen) < ChessmanSprite.SMALL_SIZE * 26)
+				realhingeR = hingeHalfHeight;
+		}
 		return realhingeR;
 	}
 
@@ -762,29 +772,29 @@ public class AIController {
 				Vector2 currentPosition = current.getPosition();
 				float checkR = this.calculateNeededR(from, to, currentPosition);
 				float currentR = 26 * current.getScale();
-				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR, from2ToDistance)) {
-					// 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去。to和from必须都为对方的子
-					if(shouldConcernAboutDouble) {
-						boolean isToAndCurrentCloseEnough =  to.getPosition().dst(currentPosition) - attack_distance_inaccuracy < (from.getScale() * 2 + to.getScale() + current.getScale() ) * 26; 
-						boolean isToAndCurrentBothRival = to.getGroup() != this.player && current.getGroup() != this.player;
-						boolean isToAndCurrentBothNearBorder = isNearBorder(to , to.getScale() * 26 * 2) && isNearBorder(current, current.getScale() * 26 * 2);
+				// 调整。如果to和current距离比较近并且都在边沿。可以考虑打出去。to和from必须都为对方的子
+				if(shouldConcernAboutDouble) {
+					boolean isToAndCurrentCloseEnough =  to.getPosition().dst(currentPosition) - attack_distance_inaccuracy < (from.getScale() * 2 + to.getScale() + current.getScale() ) * 26; 
+					boolean isToAndCurrentBothRival = to.getGroup() != this.player && current.getGroup() != this.player;
+					boolean isToAndCurrentBothNearBorder = isNearBorder(to, to.getScale() * 26) && isNearBorder(current, current.getScale() * 26);
+					/*if(from.chessmanID == 28) {
+						Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" isToAndCurrentCloseEnough:"
+								+isToAndCurrentCloseEnough+" isToAndCurrentBothRival:"+isToAndCurrentBothRival+" isToAndCurrentBothNearBorder:"+isToAndCurrentBothNearBorder);
+					}*/
+					if (isToAndCurrentCloseEnough && isToAndCurrentBothRival && isToAndCurrentBothNearBorder) {
+						boolean existChessmanBetweenFromAndCurrent = this.checkInLineWithException(from, current, to, false);
+						boolean existChessmanBetweenFromAndTo = this.checkInLineWithException(from, to, current, false);
 						/*if(from.chessmanID == 28) {
-							Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" isToAndCurrentCloseEnough:"
-									+isToAndCurrentCloseEnough+" isToAndCurrentBothRival:"+isToAndCurrentBothRival+" isToAndCurrentBothNearBorder:"+isToAndCurrentBothNearBorder);
+							Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" existChessmanBetweenFromAndCurrent:"
+									+existChessmanBetweenFromAndCurrent+" existChessmanBetweenFromAndTo:"+existChessmanBetweenFromAndTo);
 						}*/
-						if (isToAndCurrentCloseEnough && isToAndCurrentBothRival && isToAndCurrentBothNearBorder) {
-							boolean existChessmanBetweenFromAndCurrent = this.checkInLineWithException(from, current, to, false);
-							boolean existChessmanBetweenFromAndTo = this.checkInLineWithException(from, to, current, false);
-							/*if(from.chessmanID == 28) {
-								Log.d("CAN BOUNCE OFF", "chessman28---to:"+to.chessmanID+" current:"+current.chessmanID+" existChessmanBetweenFromAndCurrent:"
-										+existChessmanBetweenFromAndCurrent+" existChessmanBetweenFromAndTo:"+existChessmanBetweenFromAndTo);
-							}*/
-							if(!existChessmanBetweenFromAndCurrent && !existChessmanBetweenFromAndTo)
-							{
-								this.createDoubleAttackActionStruct(from, to, current);
-							}
+						if(!existChessmanBetweenFromAndCurrent && !existChessmanBetweenFromAndTo)
+						{
+							this.createDoubleAttackActionStruct(from, to, current);
 						}
 					}
+				}
+				if(this.checkChessmanInLine(from, to, currentPosition, currentR, checkR, from2ToDistance)) {
 					return true;
 				}
 			}
@@ -836,8 +846,7 @@ public class AIController {
 			return false;
 		}
 		// 检查是否在from和to连线后方
-		float current2ToDistance = (float) Math.sqrt((double) ((currentPosition.x - toVector.x) * (currentPosition.x - toVector.x))
-						+ (double) ((currentPosition.y - toVector.y) * (currentPosition.y - toVector.y)));
+		float current2ToDistance = currentPosition.dst(toVector);
 		if (current2ToDistance > from2ToDistance) {
 			// 检查是否同向
 			float includeAngle = this.getIncludeAngle(from.getPosition(), toVector, currentPosition);
@@ -1056,7 +1065,7 @@ public class AIController {
 	protected boolean isNearBorder(ChessmanSprite chessman , float nearDistance){
 		float x = chessman.getPosition().x;
 		float y = chessman.getPosition().y;
-		if( ChessmanSprite.checkAlive( x , y ) ) {
+		if(ChessmanSprite.checkAlive(x , y)) {
 			if (!ChessmanSprite.checkAlive(x-nearDistance, y-nearDistance) || !ChessmanSprite.checkAlive(x+nearDistance, y+nearDistance)){
 				return true;
 			}
@@ -1138,7 +1147,7 @@ public class AIController {
 		if(randomNumber < 30 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID)) {
 			decidedPropToUse = PropSprite.FORBID;
 		}
-		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
+		else if(randomNumber < 75 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
 		else if(randomNumber < 90 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
