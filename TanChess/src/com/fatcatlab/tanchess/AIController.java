@@ -46,6 +46,22 @@ public class AIController {
 				doAttackAction();
 			}
 			else if(actionType == DEFENCE_ACTION) {
+				if ((from.getPosition().x < halfScreenWidth - 3*GameScene.CHESSBOARD_LATTICE_WIDTH && 
+						from.getPosition().y > halfScreenHeight - GameScene.CHESSBOARD_LATTICE_HEIGHT/2 && 
+						from.getPosition().y < halfScreenHeight - GameScene.CHESSBOARD_LATTICE_HEIGHT/2)
+					||
+					(from.getPosition().x < halfScreenWidth - 3*GameScene.CHESSBOARD_LATTICE_WIDTH && 
+							from.getPosition().y > halfScreenHeight - GameScene.CHESSBOARD_LATTICE_HEIGHT/2 && 
+							from.getPosition().y < halfScreenHeight - GameScene.CHESSBOARD_LATTICE_HEIGHT/2)
+					)
+				{
+					to.x = halfScreenWidth;
+					if(from.getPosition().y < halfScreenHeight)
+						to.y = (float) (halfScreenHeight - 1.5*GameScene.CHESSBOARD_LATTICE_HEIGHT);
+					else
+						to.y = (float) (halfScreenHeight + 1.5*GameScene.CHESSBOARD_LATTICE_HEIGHT);
+					defenceSpeed = maxSpeed;
+				}
 				doDefenceAction();
 			}
 		}
@@ -272,7 +288,7 @@ public class AIController {
 		if(!rivalChessman.isLarge())
 		{
 			//当棋子少于6个的时候用加力随机两下
-			if( rivalChessmans.size() < 6 && random(50))
+			if( rivalChessmans.size() < 5 && random(40))
 			{
 				workToDoOnForbid();
 				return true;
