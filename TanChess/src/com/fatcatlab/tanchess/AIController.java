@@ -88,7 +88,7 @@ public class AIController {
 	private final float MAX_L_SPEED = 1.6f * 45.0f;
 
 	//private final float W_SCALE = 0.2f;
-	// private final float W_SCALE = 0.2f;
+	//private final float W_SCALE = 0.2f;
 	private final float mPixelToMeterRatio = 32.0f;
 
 	private final float L_LinearDamping = 4.0f;
