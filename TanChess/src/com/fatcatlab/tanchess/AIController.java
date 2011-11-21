@@ -1147,7 +1147,8 @@ public class AIController {
 		if(randomNumber < 30 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID)) {
 			decidedPropToUse = PropSprite.FORBID;
 		}
-		else if(randomNumber < 75 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
+		else if(randomNumber < 75 && couldUseProp(PropSprite.CHANGE)
+				&& (getLargestRivalSize() != ChessmanSprite.LARGE_SIZE || (rivalChessmans.size() < 3 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE) )) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
 		else if(randomNumber < 90 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
