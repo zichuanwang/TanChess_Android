@@ -212,7 +212,7 @@ public class AIController {
 		}
 		if(canForbid == true && this.usedProp == PropSprite.FORBID)
 		{
-			if( ForbidProcess() )
+			if(ForbidProcess())
 			{
 				this.usedProp = createUseProp();
 				mPlayerValue -= PropSprite.FORBID_NEED_SCORE;
@@ -236,6 +236,11 @@ public class AIController {
 		}
 		if( mPlayerValue < PropSprite.POWERUP_NEED_SCORE )
 			canPowerUp = false;
+		
+		// 如果对方剩余棋子小于等于3 只使用powerup道具
+		if(this.rivalChessmans.size() <= 3) {
+			this.usedProp = PropSprite.POWERUP;
+		}
 	}
 	
 	protected boolean isInDanger(ChessmanSprite myChessman, Vector2 finalPos) {
@@ -1142,7 +1147,7 @@ public class AIController {
 		if(randomNumber < 30 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID)) {
 			decidedPropToUse = PropSprite.FORBID;
 		}
-		else if(randomNumber < 60 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
+		else if(randomNumber < 75 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE && couldUseProp(PropSprite.CHANGE)) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
 		else if(randomNumber < 90 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
