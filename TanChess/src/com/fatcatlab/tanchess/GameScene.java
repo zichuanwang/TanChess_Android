@@ -29,8 +29,6 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.MassData;
 
-import android.util.Log;
-
 public class GameScene extends AbstractGameScene {
 	
 	public Texture mTexture;
@@ -141,8 +139,6 @@ public class GameScene extends AbstractGameScene {
 		boolean result = super.onSceneTouchEvent(pSceneTouchEvent);
 		if(!result)
 			mBrain.onSceneTouchEvent(pSceneTouchEvent);
-		else
-			Log.d("TOUCH", "Touch Prop");
 		return result;
 	}
 	
@@ -230,7 +226,6 @@ public class GameScene extends AbstractGameScene {
     	this.mPhysicsWorld.setContactListener(listener);
     	
     	this.mEngine.setScene(this);
-    	Log.d("MyLog","gamescene.onloadscene");
     	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
     		
 			@Override
@@ -260,7 +255,6 @@ public class GameScene extends AbstractGameScene {
     	isValid = this.mBrain.checkValid();
     	if(tmp == false && isValid == true)
     	{
-    		Log.d("confirm change turn","confirm change turn3");
     		confirmChangeTurn();
     	}
     	
@@ -287,20 +281,17 @@ public class GameScene extends AbstractGameScene {
     			isValid = false;
     			return;
     		}
-	    	Log.d("confirm change turn", "here");
     		hasSentUpdateData = false;
     		isSendingUpdateData = false;
     		rivalHaschangeTurn = false;
     		this.changePlayer();
     	}
     	else {
-    		Log.d("confirm change turn", "first time");
 			isFirstTime = false;
     		StartActivity.Instance.mSound.startSound.play();
     		//this.mBrain.simulateAI();
 		}
 		StartActivity.Instance.mSound.turnSound.play();
-    	Log.d("confirm change turn", "play sound");
 		turnValid = true;
 		if(mBrain.getCurrentPlayer() == Brain.PLAYER1) {
 			mTurnMark[0].setVisible(true);
@@ -462,7 +453,6 @@ public class GameScene extends AbstractGameScene {
     }
     
     protected void changePlayer() {
-    	Log.d("confirm change turn", "changgepa");
     	this.mBrain.changePlayer();
     	if(mBrain.isForbidPropOn == true)
     	{

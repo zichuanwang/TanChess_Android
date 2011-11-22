@@ -12,8 +12,6 @@ import org.anddev.andengine.engine.handler.timer.TimerHandler;
 
 import com.badlogic.gdx.math.Vector2;
 
-import android.util.Log;
-
 public class AIController {
 	
 	private final static int ATTACK_ACTION = 0;
@@ -506,8 +504,6 @@ public class AIController {
 		if(myChessman.isLarge() && isInDanger(myChessman, rivalChessman.getPosition()))
 			as.point -= 5000;
 		actionArray.add(as);
-		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:"+rivalChessman.chessmanID+" type:attack"+" double:false"
-				+" point:"+as.point);
 		return as;
 	}
 	
@@ -526,14 +522,11 @@ public class AIController {
 		if(myChessman.isLarge())
 			as.point -= 5000;
 		actionArray.add(as);
-		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:"+rivalChessman1.chessmanID+" type:attack"+" double:true"
-				+"point:"+as.point);
 		return as;
 	}
 	
 	protected void doAction() {
 		if(actionArray.isEmpty()) {
-			Log.d("AI ERROR", "action array empty");
 			return;
 		}
 		int maxPoint = -100000;
@@ -1011,8 +1004,6 @@ public class AIController {
 			as.point -= 1000;
 		if(myChessman.isSmall())
 			as.point -= 5000;
-		Log.d("CAN BOUNCE OFF", "from:"+myChessman.chessmanID+" to:bestPos"+" type:defence"+" double:false"
-				+"point:"+as.point);
 		actionArray.add(as);
 	}
 	
@@ -1174,14 +1165,13 @@ public class AIController {
 				&& (getLargestRivalSize() != ChessmanSprite.LARGE_SIZE || (rivalChessmans.size() < 3 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE) )) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
-		else if(randomNumber < 85 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
+		else if(randomNumber < 80 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
 				&& !(myChessmans.size() == 1 && this.getLargestMyChessman().size() != 0)) {
 			decidedPropToUse = PropSprite.ENLARGE;
 		}
 		else {
 			decidedPropToUse = PropSprite.POWERUP;
 		}
-		Log.d("PROP", "Decide Prop To Use:"+decidedPropToUse+" Random Number:"+randomNumber);
 		return decidedPropToUse;
 	}
 	

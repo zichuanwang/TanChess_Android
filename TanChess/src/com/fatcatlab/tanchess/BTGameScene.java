@@ -5,7 +5,6 @@ import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 
-import android.util.Log;
 import com.fatcatlab.tanchess.BTMessage.PacketCodes;
 
 public class BTGameScene extends GameScene {
@@ -51,7 +50,6 @@ public class BTGameScene extends GameScene {
 	
 	public void updateCollisionChessmanData() {
 		if( this.isInCharge() ) {
-			Log.d("BT","send cca");
 	        this.sendCollisionChessman();
 	        this.hasSentUpdateData = true;
 	        if(!this.mBrain.isForbidPropOn) {
@@ -64,20 +62,16 @@ public class BTGameScene extends GameScene {
 	        }
 	    }
 	    else {
-	    	Log.d("BT","register new cca timer");
 	    	this.registerUpdateHandler(new TimerHandler(0.3f, true, new ITimerCallback() {
 	    		float time = 0;
 				@Override
 				public void onTimePassed(final TimerHandler pTimerHandler) {
 					time += 0.3f;
-					Log.d("BT","cca timer:"+new Float(time).toString());
 					if(time >= 5.0f || hasReceivedCCA) {
 						if(hasReceivedCCA) {
 							hasReceivedCCA = false;
-							Log.d("BT","receive cca");
 						}
 						else {
-							Log.d("BT","waiting cca out of time");
 						}
 						unregisterUpdateHandler(pTimerHandler);
 						BTGameScene.this.hasSentUpdateData = true;
@@ -111,10 +105,6 @@ public class BTGameScene extends GameScene {
 
 	protected void onLoadScene() {
 		super.onLoadScene();
-		if(isFirstTime == true)
-			Log.d("first time","yes");
-		else
-			Log.d("first time","no");
 			
 		StartActivity.SCENE_STATE = StartActivity.STATE_BTGAMESCENE;
 		
@@ -142,11 +132,9 @@ public class BTGameScene extends GameScene {
     }
 
 	public void HandleMessage(BTMessage msg) {
-		Log.d("BT", msg.packetCodes.name());
 		switch (msg.packetCodes) {
 		case CHESSMAN_SELECT_EVENT: {
 			ChessmanIDStruct idStruct = (ChessmanIDStruct)msg.baseMessage;
-			Log.d("BT", "CHESSMAN_SELECT_EVENT"+new Integer(idStruct.chessmanID).toString());
 			mBrain.setChessmanSelected(idStruct.chessmanID);
 			break;
 		}
@@ -162,12 +150,10 @@ public class BTGameScene extends GameScene {
 		}
 		case CHESSMAN_MOVE_EVENT: {
 			ChessmanMoveStruct moveStruct = (ChessmanMoveStruct)msg.baseMessage;
-			Log.d("BT", "CHESSMAN_MOVE_STRUCT"+new Integer(moveStruct.chessmanID).toString());
 			mBrain.setChessmanMove(moveStruct.chessmanID, moveStruct.x, moveStruct.y);
 			break;
 		}
 		case CHESSMAN_COLLISION_EVENT: {
-			Log.d("BT", "receive chessman collision event");
 			ChessmanCollisionArray cca = (ChessmanCollisionArray)msg.baseMessage;
 			this.mBrain.reconcileChessmanCollisionArray(cca);
 			hasReceivedCCA = true;
@@ -208,7 +194,6 @@ public class BTGameScene extends GameScene {
 
 	// use for test
 	public void handleString(String str) {
-		Log.d("handlerString", str);
 	}
 	
 	// use for test

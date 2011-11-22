@@ -14,7 +14,6 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 public class MainScene extends AbstractGameScene implements
