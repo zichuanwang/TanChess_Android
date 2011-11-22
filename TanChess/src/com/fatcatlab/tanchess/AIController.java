@@ -1195,6 +1195,7 @@ public class AIController {
 	 */
 	private int createUseProp(){
 		int randomNumber = (int)(Math.random() * 100);
+		System.out.println("randomNumber:"+randomNumber);
 		int decidedPropToUse = -1;
 		if(randomNumber < 30 &&  ( getLargestRivalSize() == ChessmanSprite.LARGE_SIZE || rivalChessmans.size() < 4 ) && couldUseProp(PropSprite.FORBID)) {
 			decidedPropToUse = PropSprite.FORBID;
@@ -1204,7 +1205,7 @@ public class AIController {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
 		else if(randomNumber < 80 && randomNumber >= 70 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
-				&& !(myChessmans.size() == 1 && this.getLargestMyChessman().size() != 0)) {
+				&& !(myChessmans.size() == 1 && this.getLargestMyChessman().size() != 0) || getLargestMyChessman().size() == 0) {
 			decidedPropToUse = PropSprite.ENLARGE;
 		}
 		else if( randomNumber >=80 && ( this.getLargestRivalSize() == ChessmanSprite.LARGE_SIZE || rivalChessmans.size() < 10 )) {
