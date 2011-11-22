@@ -468,7 +468,7 @@ public class AIController {
 					if (!hitOtherChessman) {
 						this.createAttackActionStruct(myChessman, rivalChessman);
 					}
-				} else if(this.canPowerUp && !rivalChessman.isSmall()){
+				} else if(this.canPowerUp && !rivalChessman.isSmall() ){
 					if(rivalChessman.isMedium() && this.usedProp != PropSprite.POWERUP)
 						// 如果当前选择使用的道具不是PowerUp并且目标棋子是中型棋子 跳出
 						if(rivalChessmans.size() > 1)
@@ -491,6 +491,8 @@ public class AIController {
 	protected ActionStruct createAttackActionStruct(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
 		int myPoint = myChessman.calculateAttackingValue();
 		int rivalPoint = rivalChessman.calculateAttackedValue();
+		if(rivalChessman.getPosition().y < this.halfScreenHeight -1.5 * GameScene.CHESSBOARD_LATTICE_HEIGHT)
+			rivalPoint += 100;
 		int myFinalPoint = ChessmanSprite.calculateValue(myChessman.value, rivalChessman.getPosition());
 		if(this.player == Brain.PLAYER1 && rivalChessman.getPosition().y > this.halfScreenHeight
 				|| this.player == Brain.PLAYER2 && rivalChessman.getPosition().y < this.halfScreenHeight) {
@@ -834,6 +836,16 @@ public class AIController {
 		return result;
 	}
 	
+	protected boolean checkChessmanOuterLine(ChessmanSprite from, Vector2 toVector, Vector2 currentPosition, float currentR, float from2ToDistance){
+		boolean result = this.checkChessmanInLine(from, toVector, currentPosition, currentR , from.getScale()*26, from2ToDistance);
+		if(result) {
+			float includeAngle = this.getIncludeAngle(from.getPosition(), toVector, currentPosition);
+			if(includeAngle < 0)
+				result = true;
+		}
+		return result;
+	}
+	
 	protected float getIncludeAngle(Vector2 fromVector, Vector2 toVector, Vector2 currentVector) {
 		float includeAngle = 0;
 		Vector2 from2ToVec = new Vector2(toVector.x
@@ -942,20 +954,34 @@ public class AIController {
 			for(Iterator<Integer> it = rivalChessmans.keySet().iterator(); it.hasNext();) {
 				Integer key = (Integer) it.next();
 				ChessmanSprite rivalChessman = rivalChessmans.get(key);
+				boolean concernAboutBlock = false;
 				if(rivalChessman.isDead)
 					continue;
-				if( checkBumpHingeWhenAttack(rivalChessman, myChessman) )
+				if( checkBumpHingeWhenAttack(rivalChessman, myChessman) && myChessman.getPosition().x > this.halfScreenWidth-2.7*GameScene.CHESSBOARD_LATTICE_WIDTH
+						&& myChessman.getPosition().x < this.halfScreenWidth + 2.7*GameScene.CHESSBOARD_LATTICE_WIDTH)
 					continue;
 				if (checkInLine(rivalChessman, myChessman, false))
-					continue;
+				{
+					if(rivalChessman.getScale() != ChessmanSprite.LARGE_SIZE)
+						continue;
+					else
+						concernAboutBlock = true;
+				}
 				if (canBounceOff(rivalChessman, myChessman, false)){
 					//如果不会碰到其他东西，并且能打出去，并且打的子的位置在安全的地带，那么就反击
 					if ( !LargeChessmanBeatBack(myChessman, rivalChessman))
-						calculateChessmanDefence(myChessman);
+					{
+						if ( rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && isNearBorder(myChessman, 3*ChessmanSprite.LARGE_SIZE*26))
+						{
+							LargeChessmanBeatRivalLarge(myChessman,rivalChessman);
+						}else{
+							calculateChessmanDefence(myChessman);
+						}
+					}
 				}
-				else if (canBounceOff(rivalChessman, myChessman, true)){
+				else if (canBounceOff(rivalChessman, myChessman, true) && !( rivalChessman.getScale() == ChessmanSprite.LARGE_SIZE && concernAboutBlock) ){
 					//如果自己只有唯一一个大子了，则必须考虑，有2个或者以上大子的话则50的概率去考虑
-					if( largestList.size() <= 1 || random(50))
+					if( largestList.size() <= 1 || random(70))
 						if ( !LargeChessmanBeatBack(myChessman,rivalChessman))
 							calculateChessmanDefence(myChessman);
 				}
@@ -965,6 +991,18 @@ public class AIController {
 			this.isLargestInDanger = true;
 		else
 			this.isLargestInDanger = false;
+	}
+	
+	protected void LargeChessmanBeatRivalLarge(ChessmanSprite myChessman, ChessmanSprite rivalChessman){
+		//TODO
+		ActionStruct as = createAttackActionStruct(myChessman,rivalChessman);
+		int offset = 5;
+		if(myChessman.getPosition().x < rivalChessman.getPosition().x - 25){
+			as.to.x -= offset;
+		}else if(myChessman.getPosition().x > rivalChessman.getPosition().x +25 ){
+			as.to.x += offset;
+		}
+		as.point += 1000;
 	}
 	
 	protected void calculateChessmanDefence(ChessmanSprite myChessman){
@@ -1158,18 +1196,18 @@ public class AIController {
 	private int createUseProp(){
 		int randomNumber = (int)(Math.random() * 100);
 		int decidedPropToUse = -1;
-		if(randomNumber < 30 && getLargestRivalSize() == ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.FORBID)) {
+		if(randomNumber < 30 &&  ( getLargestRivalSize() == ChessmanSprite.LARGE_SIZE || rivalChessmans.size() < 4 ) && couldUseProp(PropSprite.FORBID)) {
 			decidedPropToUse = PropSprite.FORBID;
 		}
-		else if(randomNumber < 75 && couldUseProp(PropSprite.CHANGE)
+		else if(randomNumber < 70 && randomNumber >= 30 && couldUseProp(PropSprite.CHANGE)
 				&& (getLargestRivalSize() != ChessmanSprite.LARGE_SIZE || (rivalChessmans.size() < 3 && getLargestRivalSize() != ChessmanSprite.SMALL_SIZE) )) {
 			decidedPropToUse = PropSprite.CHANGE;
 		}
-		else if(randomNumber < 80 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
+		else if(randomNumber < 80 && randomNumber >= 70 && getSmallestMySize() != ChessmanSprite.LARGE_SIZE && couldUseProp(PropSprite.ENLARGE) 
 				&& !(myChessmans.size() == 1 && this.getLargestMyChessman().size() != 0)) {
 			decidedPropToUse = PropSprite.ENLARGE;
 		}
-		else {
+		else if( randomNumber >=80 && ( this.getLargestRivalSize() == ChessmanSprite.LARGE_SIZE || rivalChessmans.size() < 10 )) {
 			decidedPropToUse = PropSprite.POWERUP;
 		}
 		return decidedPropToUse;
