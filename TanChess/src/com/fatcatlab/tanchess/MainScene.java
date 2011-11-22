@@ -14,6 +14,7 @@ import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 public class MainScene extends AbstractGameScene implements
@@ -259,9 +260,9 @@ public class MainScene extends AbstractGameScene implements
 			mHelpScene.onLoadScene();
 			return true;
 		case MENU_CONNECT:
-			Intent itent=new Intent();
-	        itent.setClass(StartActivity.Instance, BluetoothControlActivity.class);
-	        StartActivity.Instance.startActivity(itent);
+			Intent intent=new Intent();
+	        intent.setClass(StartActivity.Instance, BluetoothControlActivity.class);
+	        StartActivity.Instance.startActivity(intent);
 	        BLUETOOTH_STATE = BLUETOOTH_CONNECTING;
 			return true;
 		default:

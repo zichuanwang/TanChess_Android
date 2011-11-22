@@ -13,6 +13,7 @@ import com.fatcatlab.tanchess.BTMessage.PacketCodes;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -41,6 +42,8 @@ public class StartActivity extends BaseGameActivity {
 
 	private LoadingScene mLoadingScene;
 	private MainScene mMainScene;
+	
+	public static BluetoothService btService;
 
 	public MainScene getmMainScene() {
 		return mMainScene;
@@ -50,6 +53,7 @@ public class StartActivity extends BaseGameActivity {
 	protected void onCreate(Bundle pSavedInstanceState) {
 		// TODO Auto-generated method stub
 		BluetoothService.Init(StartActivity.Instance, mHandler);
+		btService = BluetoothService.getService();
 		super.onCreate(pSavedInstanceState);
 	}
 
@@ -158,6 +162,10 @@ public class StartActivity extends BaseGameActivity {
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
+		if(btService == null){
+			BluetoothService.Init(StartActivity.Instance, mHandler);
+			btService = BluetoothService.getService();
+		}
 		super.onResume();
 	}
 
@@ -167,18 +175,6 @@ public class StartActivity extends BaseGameActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-            case BTGameScene.MESSAGE_STATE_CHANGE:
-                switch (msg.arg1) {
-                case BluetoothService.STATE_CONNECTED:
-                    break;
-                case BluetoothService.STATE_CONNECTING:
-                    break;
-                case BluetoothService.STATE_LISTEN:
-                	break;
-                case BluetoothService.STATE_NONE:
-                    break;
-                }
-                break;
             case BTGameScene.MESSAGE_WRITE:
                 break;
             case BTGameScene.MESSAGE_READ:

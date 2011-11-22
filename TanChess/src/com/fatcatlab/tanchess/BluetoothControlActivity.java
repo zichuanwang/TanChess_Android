@@ -44,7 +44,6 @@ public class BluetoothControlActivity extends Activity {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "----Oncreate-----");
 		
-		
 		setContentView(R.layout.main);
 
 		Button scanButton = (Button) findViewById(R.id.button_scan);
@@ -106,12 +105,13 @@ public class BluetoothControlActivity extends Activity {
 				// TODO Auto-generated method stub
 				boolean shouldCheck = true;
 				while( shouldCheck ){
-					if(BluetoothService.getService().getState() == BluetoothService.STATE_CONNECTED)
+					if(StartActivity.btService.getState() == BluetoothService.STATE_CONNECTED)
 					{
 						shouldCheck = false;
-						Intent itent = new Intent();
-						itent.setClass(BluetoothControlActivity.this, StartActivity.class);
-						StartActivity.Instance.startActivity(itent);
+						Intent intent = new Intent();
+						intent.setClass(BluetoothControlActivity.this, StartActivity.class);
+						intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+						StartActivity.Instance.startActivity(intent);
 						StartActivity.SCENE_STATE = StartActivity.STATE_BTGAMESCENE;
 					}
 				}
