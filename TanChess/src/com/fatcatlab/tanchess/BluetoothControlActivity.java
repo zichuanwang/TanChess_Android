@@ -26,7 +26,7 @@ import android.widget.Toast;
 
 public class BluetoothControlActivity extends Activity {
 
-	private final String TAG = "BluetoothControlActivity";
+	//private final String TAG = "BluetoothControlActivity";
 	private BluetoothAdapter mBtAdapter;
 
 	// Return Intent extra
