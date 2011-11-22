@@ -4,8 +4,6 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 
-import android.util.Log;
-
 public class HelpDocSprite extends Sprite{
 
 	public HelpDocSprite(float pX, float pY, float pWidth, float pHeight,
@@ -199,14 +197,14 @@ public class HelpDocSprite extends Sprite{
 			{
 				this.display_status = ROLLBACKDOWN;
 				speed = (beginPointY - currentPointY);
-				Log.d("speed back down", new Float(speed).toString());
+				//Log.d("speed back down", new Float(speed).toString());
 				break;
 			}
 			if(currentPointY > TOP)
 			{
 				this.display_status = ROLLBACKUP;
 				speed = (beginPointY - currentPointY);
-				Log.d("speed back up", new Float(speed).toString());
+				//Log.d("speed back up", new Float(speed).toString());
 				break;
 			}
 			if(beginPointY > currentPointY )

@@ -14,7 +14,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -42,7 +41,6 @@ public class BluetoothControlActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// TODO Auto-generated method stub
-		Log.d(TAG, "----Oncreate-----");
 		
 		setContentView(R.layout.main);
 
@@ -154,7 +152,6 @@ public class BluetoothControlActivity extends Activity {
 	 * Start device discover with the BluetoothAdapter
 	 */
 	private void doDiscovery() {
-		Log.d(TAG, "doDiscovery()");
 
 		// Indicate scanning in the title
 		setProgressBarIndeterminateVisibility(true);

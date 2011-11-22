@@ -7,8 +7,6 @@ import java.util.Vector;
 
 import org.anddev.andengine.input.touch.TouchEvent;
 
-import android.util.Log;
-
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
@@ -118,15 +116,11 @@ public class Brain {
 						this.mPlayer2Score += chessman.value / 2;
 					this.mPlayer1Score += chessman.value;
 					this.mPlayer1Life--;
-					Log.d("group1life changed",
-							new Integer(mPlayer1Life).toString());
 				} else {
 					if (this.mCurrentPlayer == PLAYER1)
 						this.mPlayer1Score += chessman.value / 2;
 					this.mPlayer2Score += chessman.value;
 					this.mPlayer2Life--;
-					Log.d("group2life changed",
-							new Integer(mPlayer2Life).toString());
 				}
 				checkPropValid();
 				mToDestroy.add(chessman);
@@ -438,7 +432,6 @@ public class Brain {
 	}
 
 	public void setChessmanMove(int id, float x, float y) {
-		Log.d("move message", "get");
 		ChessmanSprite chessmanSprite = mChessmans.get(id);
 		chessmanSprite.setAlpha(1.0f);
 		Vector2 vector = new Vector2(x, y);
@@ -509,7 +502,6 @@ public class Brain {
 		for (int i = 0; i < 32; i++) {
 			ChessmanCollisionStruct ccs = array.getCSSAtIndex(i);
 			ChessmanSprite sprite = this.mChessmans.get(ccs.ID);
-			Log.d("BT", "ID:" + new Integer(ccs.ID).toString());
 			boolean selfDied = ChessmanSprite.checkAlive(
 					sprite.getPosition().x, sprite.getPosition().y);
 			boolean rivalDied = ChessmanSprite.checkAlive(ccs.Position_x,
